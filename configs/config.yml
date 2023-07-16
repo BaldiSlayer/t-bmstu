@@ -1,5 +1,0 @@
-port: "8080"
-DBUsername: "bob"
-DBPassword: "P@$$w0rd"
-DBName: "test"
-SessionSecret: "secret"
