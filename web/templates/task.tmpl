@@ -12,11 +12,6 @@
         <!-- Bootstrap JS -->
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
-        <!-- Highlighting -->
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.min.css" type="text/css" />
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
-
-
 
         </script>
 
@@ -77,38 +72,33 @@
                   <thead>
                     <tr>
                       <th>ID</th>
-                      <th>Задача</th>
                       <th>Компилятор</th>
                       <th>Вердикт</th>
+                      <th>Тест</th>
                       <th>Время</th>
                       <th>Память</th>
                     </tr>
                   </thead>
                   <tbody>
+                    {{range .Submissions}}
                     <tr>
-                      <td>1</td>
-                      <td>Задача 1</td>
-                      <td>Компилятор 1</td>
-                      <td><span class="badge badge-success">OK</span></td>
-                      <td>10.5 сек</td>
-                      <td>512 КБ</td>
-                    </tr>
-                    <tr>
-                      <td>2</td>
-                      <td>Задача 2</td>
-                      <td>Компилятор 2</td>
-                      <td><span class="badge badge-danger">Ошибка</span></td>
-                      <td>15.2 сек</td>
-                      <td>1024 КБ</td>
-                    </tr>
-                    <tr>
-                      <td>3</td>
-                      <td>Задача 3</td>
-                      <td>Компилятор 3</td>
-                      <td><span class="badge badge-success">OK</span></td>
-                      <td>7.8 сек</td>
-                      <td>256 КБ</td>
-                    </tr>
+                                <td>{{.ID}}</td>
+                                <td>{{.Language}}</td>
+                                <td>
+                                    {{if eq .Verdict "Accepted"}}
+                                        <span class="badge badge-success">{{.Verdict}}</span>
+                                    {{else if eq .Verdict "Waiting"}}
+                                        <span class="badge badge-warning">{{.Verdict}}</span>
+                                    {{else}}
+                                        <span class="badge badge-danger">{{.Verdict}}</span>
+                                    {{end}}
+                                </td>
+                                <td>{{.Test}}</td>
+                                <td>{{.ExecutionTime}}</td>
+                                <td>{{.MemoryUsed}}</td>
+                            </tr>
+                    {{end}}
+
                   </tbody>
                 </table>
               </div>
@@ -127,10 +117,10 @@
 
         function sendRequest() {
             // get the problemID parameter from the URL
-            const problemID = window.location.href.substr(window.location.href.indexOf('problems/') + 9);
+            const problemID = window.location.href.substr(window.location.href.indexOf('problem/') + 8);
 
             // construct the API URL
-            const apiUrl = `/api/problems/${problemID}/submit`;
+            const apiUrl = `/view/problem/${problemID}/submit`;
 
             // send a POST request with JSON data
             fetch(apiUrl, {
@@ -140,7 +130,7 @@
                 },
                 body: JSON.stringify({
                     "sourceCode": document.getElementById("Code").value,
-                    "language": "python3", // TODO: enum of languages
+                    "language": document.getElementById('dropdownMenuButton').innerText,
                 })
             })
                 .then(response => {
