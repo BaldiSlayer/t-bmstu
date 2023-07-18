@@ -47,13 +47,13 @@ type Contest struct {
 }
 
 type Task struct {
-	ID             int    `json:"id"`
-	Name           string `json:"name"`
-	Constraints    string `json:"constraints"`
-	Condition      string `json:"condition"`
-	InputData      string `json:"input_data"`
-	OutputData     string `json:"output_data"`
-	Notes          string `json:"notes"`
-	AdditionalInfo string `json:"additional_info"`
-	Tests          string `json:"tests"`
+	ID             string                 `json:"id"`
+	Name           string                 `json:"name"`
+	Constraints    map[string]string      `json:"constraints"`
+	Condition      string                 `json:"condition"`
+	InputData      string                 `json:"input_data"`
+	OutputData     string                 `json:"output_data"`
+	Source         string                 `json:"source"`
+	AdditionalInfo string                 `json:"additional_info"`
+	Tests          map[string]interface{} `json:"tests"`
 }

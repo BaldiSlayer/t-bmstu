@@ -39,13 +39,15 @@
         <div id="task-list" class="mt-4">
 
             {{range .Contests}}
-                <div class="card task-card" onclick="location.href='task1.html';">
+                <div class="card task-card mt-2 mb-2" onclick="location.href='contest/{{.ID}}/tasks';">
                     <div class="card-body">
                         <h5 class="card-title">{{.Title}}</h5>
-                        <p class="card-text">Description of Task 1</p>
+                        <p class="card-text">Description of contest {{.ID}}</p>
                     </div>
                 </div>
             {{end}}
+
+
 
 
         </div>

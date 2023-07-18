@@ -1,13 +1,71 @@
 package timus
 
 import (
+	"encoding/json"
+	"fmt"
+	"github.com/Baldislayer/t-bmstu/pkg/repository"
 	"github.com/PuerkitoBio/goquery"
-	"net/http"
-	"net/url"
+	"log"
+	"strings"
+	"time"
 )
 
-var (
-	Languages = []string{"FreePascal 2.6",
+type Timus struct {
+	Name string
+}
+
+func getMiddle(start *goquery.Selection, end string) string {
+	if start == nil {
+		return ""
+	}
+
+	text := ""
+	currentElement := start
+
+	for currentElement.Length() != 0 && !(strings.HasPrefix(currentElement.Text(), end)) {
+		if currentElement.Is("div.problem_par") {
+			text += currentElement.Text() + " "
+		}
+		currentElement = currentElement.Next()
+	}
+
+	return strings.TrimSpace(text)
+}
+
+func parseTableToJSON(table *goquery.Selection) string {
+	tests := []map[string]string{}
+
+	rows := table.Find("tr")
+	rows.Each(func(i int, row *goquery.Selection) {
+		if i != 0 { // Skip the header row
+			cells := row.Find("td")
+			if cells.Length() == 2 {
+				inputData := cells.Eq(0).Find("pre").Text()
+				outputData := cells.Eq(1).Find("pre").Text()
+
+				test := map[string]string{
+					"input":  strings.TrimSpace(inputData),
+					"output": strings.TrimSpace(outputData),
+				}
+				tests = append(tests, test)
+			}
+		}
+	})
+
+	jsonTests, err := json.MarshalIndent(tests, "", "  ")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return string(jsonTests)
+}
+
+func (t *Timus) GetName() string {
+	return t.Name
+}
+
+func (t *Timus) GetLanguages() []string {
+	return []string{"FreePascal 2.6",
 		"Visual C 2019",
 		"Visual C++ 2019",
 		"Visual C 2019 x64",
@@ -26,64 +84,92 @@ var (
 		"Rust 1.58 x64",
 		"Kotlin 1.4.0",
 	}
-
-	Codes = map[string]string{
-		"FreePascal 2.6":      "31",
-		"Visual C 2019":       "63",
-		"Visual C++ 2019":     "64",
-		"Visual C 2019 x64":   "65",
-		"Visual C++ 2019 x64": "66",
-		"GCC 9.2 x64":         "67",
-		"G++ 9.2 x64":         "68",
-		"Clang++ 10 x64":      "69",
-		"Java 1.8":            "32",
-		"Visual C# 2019":      "61",
-		"Python 3.8 x64":      "57",
-		"PyPy 3.8 x64":        "71",
-		"Go 1.14 x64":         "58",
-		"Ruby 1.9":            "18",
-		"Haskell 7.6":         "19",
-		"Scala 2.11":          "33",
-		"Rust 1.58 x64":       "72",
-		"Kotlin 1.4.0":        "60",
-	}
-)
-
-func GetProblem(task_id string) (string, error) {
-	doc, err := goquery.NewDocument("https://acm.timus.ru/problem.aspx?space=1&locale=ru&num=" + task_id)
-	if err != nil {
-		return "", err
-	}
-
-	// Find the div with class "problem_content"
-	problemContent := doc.Find("div.problem_content")
-
-	// Get the HTML content of the div
-	htmlContent, err := problemContent.Html()
-
-	return htmlContent, err
 }
 
-func SendSubmission(judge_id string, language string, task_id string, code string) error {
-	// TODO давай по новой, Леша, все хня
-	// This is the function, that send solution to the timus
-	url_ := "https://acm.timus.ru/submit.aspx"
+func (t *Timus) GetProblem(taskID string) (repository.Task, error) {
+	url := fmt.Sprintf("https://acm.timus.ru/problem.aspx?space=1&locale=ru&num=%s", taskID)
 
-	r := url.Values{
-		"action":     {"submit"},
-		"SpaceID":    {"1"},
-		"JudgeID":    {judge_id},
-		"Language":   {language},
-		"ProblemNum": {task_id},
-		"Source":     {code},
-	}
-
-	resp, err := http.PostForm(url_, r)
-
+	doc, err := goquery.NewDocument(url)
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 
-	defer resp.Body.Close()
-	return err
+	if doc.Find("div.problem_content").Length() == 0 {
+		return repository.Task{}, err
+	}
+
+	task := repository.Task{}
+
+	problemContent := doc.Find("div.problem_content")
+
+	// Get problem information
+	task.Name = strings.Split(problemContent.Find("h2.problem_title").Text(), ". ")[1]
+
+	// Get constraints
+	limitsText := problemContent.Find("div.problem_limits").Text()
+	limitsTextSlice := strings.Split(limitsText, "Ограничение ")[1:]
+
+	timeConstraint := strings.TrimSpace(strings.ReplaceAll(strings.ReplaceAll(limitsTextSlice[0], "времени: ", ""), "секунды", ""))
+	memoryConstraint := strings.TrimSpace(strings.ReplaceAll(strings.ReplaceAll(limitsTextSlice[1], "памяти: ", ""), "МБ", ""))
+
+	task.Constraints = map[string]string{
+		"time":   timeConstraint,
+		"memory": memoryConstraint,
+	}
+
+	problemTextDiv := problemContent.Find("div#problem_text")
+
+	// Get condition
+	condition := getMiddle(
+		problemTextDiv.Find("div.problem_par").First(),
+		"Исходные данные",
+	)
+	task.Condition = strings.TrimSpace(condition)
+
+	// Get input data
+	task.InputData = getMiddle(
+		problemTextDiv.Find("h3.problem_subtitle:contains('Исходные данные')").Next(),
+		"Результат",
+	)
+
+	// Get output data
+	task.OutputData = getMiddle(
+		problemContent.Find("h3.problem_subtitle:contains('Результат')").Next(),
+		"Пример",
+	)
+
+	// Get tests
+	testsTable := problemTextDiv.Find("table.sample")
+	task.Tests = map[string]interface{}{
+		"tests": parseTableToJSON(testsTable),
+	}
+
+	// Get source
+	task.Source = problemContent.Find("div.problem_source").Text()
+
+	task.AdditionalInfo = ""
+
+	return task, nil
+}
+
+func (t *Timus) Submit(login string, id string, SourceCode string, Language string,
+	contestId int, contestTaskId int) error {
+	currentTime := time.Now()
+	currentTimeString := currentTime.Format("2006-01-02 15:04:05")
+	submission := repository.Submission{
+		SenderLogin:    login,
+		TaskID:         id,
+		TestingSystem:  t.GetName(),
+		Code:           SourceCode,
+		Language:       Language,
+		ContestTaskID:  contestTaskId,
+		ContestID:      contestId,
+		SubmissionTime: currentTimeString,
+		SVerdictID:     "-",
+	}
+
+	// TODO get err from here
+	repository.AddSubmission(submission)
+
+	return nil
 }
