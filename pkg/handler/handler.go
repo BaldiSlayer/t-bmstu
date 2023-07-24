@@ -17,6 +17,8 @@ func (h *Handler) InitRoutes() *gin.Engine {
 
 	store := cookie.NewStore([]byte(viper.GetString("SessionSecret")))
 	store.Options(sessions.Options{
+		Path:     "/", // Установка пути для куки на "/"
+		MaxAge:   86400,
 		HttpOnly: true,
 		// TODO add Secure and other need able options
 	})

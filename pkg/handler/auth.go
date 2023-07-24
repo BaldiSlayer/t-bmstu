@@ -56,12 +56,11 @@ func (h *Handler) callback(c *gin.Context) {
 	session.Set(accessTokenKey, token.AccessToken)
 	session.Save()
 
-	// Получить исходный URL из сессии
 	redirectURL := session.Get("redirect_url")
 	if redirectURL != nil {
 		c.Redirect(http.StatusFound, redirectURL.(string))
 	} else {
-		c.String(http.StatusOK, "Authenticated successfully!")
+		c.Redirect(http.StatusFound, "/constests")
 	}
 }
 
@@ -81,7 +80,36 @@ func authMiddleware() gin.HandlerFunc {
 
 		// Использование токена для аутентификации запроса
 		client := oauthConf.Client(c, &oauth2.Token{AccessToken: token.(string)})
-		resp, err := client.Get("https://api.github.com/user/emails")
+
+		// Запрос информации о пользователе
+		resp, err := client.Get("https://api.github.com/user")
+		if err != nil {
+			session.Set("redirect_url", c.Request.RequestURI)
+			session.Save()
+			c.Redirect(http.StatusFound, "/auth/login")
+			c.Abort()
+			return
+		}
+		defer resp.Body.Close()
+
+		var user map[string]interface{}
+		err = json.NewDecoder(resp.Body).Decode(&user)
+		if err != nil {
+			fmt.Println("Failed to parse user JSON:", err)
+			return
+		}
+
+		// Извлечение email, имени аккаунта и ссылки на аватарку из полученных данных
+		//email := user["email"].(string)
+		// (user["id"].(float64))
+		login := user["login"].(string)
+		avatarURL := user["avatar_url"].(string)
+
+		c.Set("login", login)
+		c.Set("avatar_url", avatarURL)
+
+		client = oauthConf.Client(c, &oauth2.Token{AccessToken: token.(string)})
+		resp, err = client.Get("https://api.github.com/user/emails")
 		if err != nil {
 			session.Set("redirect_url", c.Request.RequestURI)
 			session.Save()
@@ -105,7 +133,8 @@ func authMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		c.Set("email", emails[0]["email"]) // Сохранение email в контексте для обработчиков роутов
+		c.Set("email", emails[0]["email"])
+
 		c.Next()
 	}
 }
