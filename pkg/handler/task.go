@@ -4,9 +4,36 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Baldislayer/t-bmstu/pkg/repository"
+	"github.com/Baldislayer/t-bmstu/pkg/testsystems/timus"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strconv"
 )
+
+func (h *Handler) timusTaskList(c *gin.Context) {
+	count := c.Query("count")
+
+	parsedCount, err := strconv.Atoi(count)
+	if err != nil {
+		// TODO
+		parsedCount = 15
+	}
+
+	// TODO
+	if parsedCount > 50 {
+		parsedCount = 50
+	}
+
+	taskList, err := timus.GetTaskList(parsedCount)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, "bad req")
+	}
+
+	c.HTML(http.StatusOK, "ts_tasks_list.tmpl", gin.H{
+		"Tasks": taskList,
+	})
+}
 
 func (h *Handler) getTask(c *gin.Context) {
 	taskId := c.Param("id")

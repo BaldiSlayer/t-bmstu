@@ -1,6 +1,7 @@
 package timus
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/Baldislayer/t-bmstu/pkg/repository"
@@ -9,6 +10,11 @@ import (
 	"strings"
 	"time"
 )
+
+type Task struct {
+	ID   string
+	Name string
+}
 
 type Timus struct {
 	Name string
@@ -172,4 +178,34 @@ func (t *Timus) Submit(login string, id string, SourceCode string, Language stri
 	repository.AddSubmission(submission)
 
 	return nil
+}
+
+func GetTaskList(count int) ([]Task, error) {
+	doc, err := goquery.NewDocument("https://acm.timus.ru/problemset.aspx?space=1&page=all&locale=ru")
+	if err != nil {
+		return nil, err
+	}
+
+	var tasks []Task
+
+	// Найти таблицу по классу и выполнить парсинг строк
+	doc.Find("table.problemset tr.content").Each(func(i int, s *goquery.Selection) {
+		if i < count {
+			id := s.Find("td").Eq(1).Text()
+			name := s.Find("td.name a").Text()
+
+			// Если name содержит перенос строки, уберите его с помощью strings.TrimSpace
+			name = strings.TrimSpace(name)
+
+			if id != "" && name != "" {
+				idBytes := []byte("timus" + id)
+				tasks = append(tasks, Task{
+					ID:   base64.StdEncoding.EncodeToString(idBytes),
+					Name: name,
+				})
+			}
+		}
+	})
+
+	return tasks, nil
 }

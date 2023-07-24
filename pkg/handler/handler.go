@@ -44,6 +44,7 @@ func (h *Handler) InitRoutes() *gin.Engine {
 	view := router.Group("/view")
 	view.Use(authMiddleware())
 	{
+		view.GET("/timus", h.timusTaskList)
 		view.GET("/problem/:id", h.getTask)
 		view.POST("/problem/:id/submit", h.submitTask)
 

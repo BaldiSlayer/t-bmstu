@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"github.com/Baldislayer/t-bmstu/pkg/repository"
 	"github.com/Baldislayer/t-bmstu/pkg/testsystems"
-	"github.com/Baldislayer/t-bmstu/pkg/testsystems/timus"
 	"strings"
 )
 
@@ -24,11 +23,7 @@ func TaskInfoById(s string) (TaskInfo, error) {
 	}
 	decodedString := string(decodedBytes)
 
-	allowedTestsystems := []testsystems.TestSystem{
-		&timus.Timus{Name: "timus"},
-	}
-
-	for _, system := range allowedTestsystems {
+	for _, system := range testsystems.AllowedTestsystems {
 		if strings.HasPrefix(decodedString, system.GetName()) {
 			// Нашли систему, разделяем online_judge и id
 			task := TaskInfo{
@@ -72,19 +67,19 @@ func GetTaskPartsById(task_id string) (TaskInfo, repository.Task, error) {
 	return taskInfo, taskParts, err
 }
 
-func TaskSubmit(myTaskId string, login string, SourceCode string, Language string, contest_id int, contstTaskId int) error {
+func TaskSubmit(myTaskId string, login string, SourceCode string, Language string, contestId int, contestTaskId int) error {
 	taskInfo, err := TaskInfoById(myTaskId)
 
 	if err != nil {
 		return err
 	}
 
-	taskInfo.onlineJudge.Submit(login,
+	err = taskInfo.onlineJudge.Submit(login,
 		taskInfo.id,
 		SourceCode,
 		Language,
-		contest_id,
-		contstTaskId)
+		contestId,
+		contestTaskId)
 
-	return nil
+	return err
 }
