@@ -2,12 +2,14 @@ package testsystems
 
 import (
 	"github.com/Baldislayer/t-bmstu/pkg/repository"
+	"github.com/Baldislayer/t-bmstu/pkg/testsystems/codeforces"
 	"github.com/Baldislayer/t-bmstu/pkg/testsystems/timus"
 )
 
 // AllowedTestsystems - разрешенные (добавленные) тестирующие системы
 var AllowedTestsystems = []TestSystem{
 	&timus.Timus{Name: "timus"},
+	&codeforces.Codeforces{Name: "codeforces"},
 }
 
 // TestSystem - это интерфейс класса тестирующей системы, то есть все тестирующие системы должны обладать этими функциями
