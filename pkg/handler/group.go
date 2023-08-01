@@ -49,3 +49,5 @@ func (h *Handler) checkInvite(c *gin.Context) {
 	repository.AddUserToGroup(c.GetString("username"), groupId, "student")
 	c.JSON(http.StatusOK, gin.H{"Success": "U are member of this group now"})
 }
+
+//
