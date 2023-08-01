@@ -22,12 +22,17 @@ func (t ByID) Swap(i, j int)      { t[i], t[j] = t[j], t[i] }
 func (t ByID) Less(i, j int) bool { return t[i].ID < t[j].ID }
 
 func (h *Handler) getContestTasks(c *gin.Context) {
-	contest_id, err := strconv.Atoi(c.Param("contest_id"))
+	contestId, err := strconv.Atoi(c.Param("contest_id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 
-	tasks := repository.GetContestInfo(contest_id).Tasks
+	contest, err := repository.GetContestInfoById(contestId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+		return
+	}
+	tasks := contest.Tasks
 
 	task_list := []ContestTableTask{}
 
@@ -55,7 +60,12 @@ func (h *Handler) getContestTask(c *gin.Context) {
 	}
 
 	taskId := c.Param("task_id")
-	tasks := repository.GetContestInfo(contestId).Tasks
+	contest, err := repository.GetContestInfoById(contestId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+		return
+	}
+	tasks := contest.Tasks
 
 	value, ok := tasks[taskId]
 
@@ -87,7 +97,7 @@ func (h *Handler) getContestTask(c *gin.Context) {
 			return
 		}
 
-		submissions, err := repository.GetVerditctsOfContestTask(c.GetString("email"), contestId, intContestTaskId)
+		submissions, err := repository.GetVerditctsOfContestTask(c.GetString("username"), contestId, intContestTaskId)
 
 		c.HTML(http.StatusOK, "task.tmpl", gin.H{
 			"Task":        taskParts,
@@ -118,17 +128,23 @@ func (h *Handler) submitContestTask(c *gin.Context) {
 
 	contestTaskId, err := strconv.Atoi(c.Param("task_id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 		return
 	}
 
 	contestId, err := strconv.Atoi(c.Param("contest_id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 		return
 	}
 
-	tasks := repository.GetContestInfo(contestId).Tasks
+	contest, err := repository.GetContestInfoById(contestId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+		return
+	}
+	tasks := contest.Tasks
+
 	value, ok := tasks[strconv.Itoa(contestTaskId)]
 
 	if !ok {
@@ -136,7 +152,7 @@ func (h *Handler) submitContestTask(c *gin.Context) {
 		return
 	}
 
-	err = TaskSubmit(value.(string), c.GetString("email"), requestData.SourceCode, requestData.Language,
+	err = TaskSubmit(value.(string), c.GetString("username"), requestData.SourceCode, requestData.Language,
 		contestId, contestTaskId)
 
 	if err != nil {

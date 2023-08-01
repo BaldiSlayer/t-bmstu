@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Форма регистрации</title>
+  <!-- Подключаем Bootstrap CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+
+  <style>
+
+    .login-form {
+      max-width: 500px;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    
+    .login-form .btn-login {
+      width: 100%;
+    }
+    
+    .login-header {
+      color: #2683ee;
+      font-family: Rubik, sans-serif;
+    }
+
+    .footer {
+      position: fixed; /* Закрепляем футер */
+      bottom: 0; /* Размещаем футер внизу */
+      width: 100%;
+      background-color: #f5f5f5;
+      text-align: center;
+      padding: 10px 0;
+    }
+
+    .footer a {
+      color: #2683ee;
+      text-decoration: none;
+    }
+
+  </style>
+</head>
+
+<body>
+  <div class="container mt-5">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <div class="card">
+          <div class="card-body">
+            <h3 class="text-center mb-4 login-header">Кафедра ИУ9</h3>
+            <form id="registration-form" onsubmit="return validateForm()">
+              <div class="mb-3">
+                <input type="text" class="form-control" id="last-name" placeholder="Фамилия" required>
+              </div>
+              <div class="mb-3">
+                <input type="text" class="form-control" id="first-name" placeholder="Имя" required>
+              </div>
+              <div class="mb-3">
+                <input type="text" class="form-control" id="username" placeholder="Никнейм" required>
+              </div>
+              <div class="mb-3">
+                <input type="password" class="form-control" id="password" placeholder="Пароль" required>
+              </div>
+              <div class="mb-3">
+                <input type="password" class="form-control" id="password_repeat" placeholder="Повторите пароль" required>
+              </div>
+              <small class="text-danger" id="password_match_warning" style="display: none;">Пароли не совпадают</small>
+              <div class="mb-3">
+                <input type="text" class="form-control" id="group" placeholder="Группа" required>
+              </div>
+              <div class="mb-3">
+                <input type="email" class="form-control" id="email" placeholder="Email" required
+                       pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+                       title="Введите корректный email адрес, например, user@example.com">
+              </div>
+              <div class="text-center">
+                <button type="submit" class="btn btn-primary btn-send">Зарегистрироваться</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="mt-auto py-3 footer">
+    <span class="text-muted">Made by <a href="https://github.com/BaldiSlayer">BaldiSlayer</a> with</span> <span class="heart">&#10084;&#65039;</span>
+  </footer>
+
+  <!--  Bootstrap JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+
+
+<script>
+  function validateForm() {
+    var emailInput = document.getElementById('email');
+    var email = emailInput.value;
+
+    var emailPattern = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
+    if (!emailPattern.test(email)) {
+      alert('Введите корректный email адрес, например, user@example.com');
+      return false;
+    }
+    
+    return true;
+  }
+
+  const passwordInput = document.getElementById('password');
+  const repeatPasswordInput = document.getElementById('password_repeat');
+  const passwordMatchWarning = document.getElementById('password_match_warning');
+
+  passwordInput.addEventListener('input', checkPasswordsMatch);
+  repeatPasswordInput.addEventListener('input', checkPasswordsMatch);
+
+  function checkPasswordsMatch() {
+    const password = passwordInput.value;
+    const repeatPassword = repeatPasswordInput.value;
+
+    if (password === repeatPassword) {
+      passwordMatchWarning.style.display = 'none';
+    } else {
+      passwordMatchWarning.style.display = 'block';
+    }
+  }
+
+  const registrationForm = document.getElementById('registration-form');
+  const errorMessageElement = document.getElementById('errorMessage');
+
+  registrationForm.onsubmit = async (e) => {
+    e.preventDefault(); // Отменяем стандартное поведение формы
+
+    const username = document.getElementById('username').value;
+    const password = passwordInput.value;
+    const lastName = document.getElementById('last-name').value;
+    const firstName = document.getElementById('first-name').value;
+    const group = document.getElementById('group').value;
+    const email = document.getElementById('email').value;
+
+    if (password != repeatPasswordInput.value) {
+      return
+    }
+
+    // Выполняем отправку данных формы на сервер
+    try {
+      const response = await fetch('/auth/registration', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({username, password, lastName, firstName, group, email})
+      });
+
+      if (response.ok) {
+        // Если запрос выполнен успешно, перенаправляем пользователя на другую страницу
+
+      } else {
+
+      }
+    } catch (error) {
+      // Если произошла ошибка при выполнении запроса, показываем сообщение об ошибке
+      // errorMessageElement.innerText = 'Произошла ошибка. Попробуйте позже.';
+    }
+  };
+</script>
+
+</html>

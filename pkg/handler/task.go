@@ -49,7 +49,7 @@ func (h *Handler) getTask(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 
-	submissons := repository.GetVerdicts(c.GetString("email"), taskInfo.id, taskInfo.onlineJudge.GetName())
+	submissons := repository.GetVerdicts(c.GetString("username"), taskInfo.id, taskInfo.onlineJudge.GetName())
 
 	type Test struct {
 		Input  string `json:"input"`
@@ -89,7 +89,7 @@ func (h *Handler) submitTask(c *gin.Context) {
 		return
 	}
 
-	err := TaskSubmit(c.Param("id"), c.GetString("email"), requestData.SourceCode, requestData.Language,
+	err := TaskSubmit(c.Param("id"), c.GetString("username"), requestData.SourceCode, requestData.Language,
 		-1, -1)
 
 	if err != nil {
@@ -101,13 +101,14 @@ func (h *Handler) submitTask(c *gin.Context) {
 	})
 }
 
+// TODO вынести в какой-то другой файл / убрать это по причине "все контесты" лежат в какой-то группе
 func (h *Handler) getContests(c *gin.Context) {
-	// пока что я буду отображать все контесты, которые у меня есть
-	// потом сделать так, чтобы отображались только те, в которые он может зайти
+	// пока что я буду отображать все контесты
+	// сделать отображение только тех, в которые он может зайти
 
-	constests := repository.GetContests()
+	contests := repository.GetContests()
 
 	c.HTML(http.StatusOK, "contests.tmpl", gin.H{
-		"Contests": constests,
+		"Contests": contests,
 	})
 }

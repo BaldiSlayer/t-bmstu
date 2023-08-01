@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Вход</title>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+  <!-- Custom CSS -->
+  <style>
+    body {
+      height: 100vh;
+      display: flex;
+      flex-direction: column; /* Добавляем flex-direction: column */
+      justify-content: center;
+      align-items: center;
+    }
+
+    .login-form {
+      max-width: 500px;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    
+    .login-form .btn-login {
+      width: 100%;
+    }
+    
+    .login-header {
+      color: #2683ee;
+      font-family: Rubik, sans-serif;
+    }
+
+    .small-text {
+      font-size: 12px;
+      color: #888; /* Серый цвет текста */
+      margin-top: 5px;
+    }
+
+    .oauth2-login {
+      max-width: 400px;
+      border-radius: 5px;
+      display: flex; /* Используем flexbox для расположения блоков по горизонтали */
+      justify-content: center; /* Центрирование блоков по горизонтали */
+      align-items: center; /* Выравнивание элементов по вертикали */
+      margin-top: 10px; /* Уменьшаем отступ сверху */
+    }
+    .login {
+      display: flex;
+      flex-direction: column;
+      align-items: center; /* Выравнивание элементов внутри блока .login по центру */
+      margin: 0 5px; /* Удаляем отступы между блоками .login */
+    }
+    .login img {
+      width: 40px;
+    }
+    .login a {
+      display: block;
+      margin-top: 10px;
+    }
+
+    .footer {
+      position: fixed; /* Закрепляем футер */
+      bottom: 0; /* Размещаем футер внизу */
+      width: 100%;
+      background-color: #f5f5f5;
+      text-align: center;
+      padding: 10px 0;
+    }
+
+    .footer a {
+      color: #2683ee;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-form">
+    <h3 class="text-center mb-4 login-header">Кафедра ИУ9</h3>
+    <form id="loginForm" method="POST">
+      <div class="mb-3">
+        <input type="text" class="form-control" id="username" name="username" placeholder="Логин" required>
+      </div>
+      <div class="mb-3">
+        <input type="password" class="form-control" id="password" name="password" placeholder="Пароль" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-login">Войти</button>
+
+      <div id="errorMessage" class="text-center small-text mt-3" style="color: red"></div>
+
+    </form>
+    
+    <div class="text-center small-text mt-3">
+      <p>Еще нет аккаунта? <a href="/auth/registration">Зарегистрируйтесь</a></p>
+    </div>
+
+    <div class="text-center small-text mt-3">
+      <p>Или войти с помощью</p>
+    </div>
+
+    <div class="oauth2-login">
+      <div class="login mt-3">
+        <img src="/images/github-mark.svg" alt="GitHub Logo">
+        <a href="/auth/github/login"></a>
+      </div>
+
+      <div class="login mt-3">
+        <img src="/images/google-mark.svg" alt="Google Logo">
+        <a href="#"></a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="mt-auto py-3 footer">
+    <span class="text-muted">Made by <a href="https://github.com/BaldiSlayer">BaldiSlayer</a> with</span> <span class="heart">&#10084;&#65039;</span>
+  </footer>
+
+  <script>
+    const loginForm = document.getElementById('loginForm');
+    const errorMessageElement = document.getElementById('errorMessage');
+
+    loginForm.onsubmit = async (e) => {
+      e.preventDefault(); // Отменяем стандартное поведение формы
+
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+
+      // Выполняем отправку данных формы на сервер
+      try {
+        const response = await fetch('/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ username, password })
+        });
+
+        if (response.ok) {
+          // Если запрос выполнен успешно, перенаправляем пользователя на другую страницу
+          window.location.href = '/view/home';
+        } else {
+          // Если сервер вернул ошибку, показываем сообщение об ошибке
+          const jsonResponse = await response.json();
+          const errorMessage = jsonResponse.error;
+          errorMessageElement.innerHTML = errorMessage;
+        }
+      } catch (error) {
+        // Если произошла ошибка при выполнении запроса, показываем сообщение об ошибке
+        errorMessageElement.innerText = 'Произошла ошибка. Попробуйте позже.';
+      }
+    };
+  </script>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,5 +1,7 @@
 package repository
 
+import "encoding/json"
+
 type Submission struct {
 	ID             int    `json:"id"`
 	SenderLogin    string `json:"sender_login"`
@@ -56,4 +58,26 @@ type Task struct {
 	Source         string                 `json:"source"`
 	AdditionalInfo string                 `json:"additional_info"`
 	Tests          map[string]interface{} `json:"tests"`
+}
+
+type User struct {
+	Username     string            `json:"username"`
+	PasswordHash string            `json:"password_hash"`
+	LastName     string            `json:"last_name"`
+	FirstName    string            `json:"first_name"`
+	Email        string            `json:"email"`
+	Group        string            `json:"group_name"`
+	Role         string            `json:"role"`
+	SolvedTasks  []string          `json:"solved_tasks"`
+	Groups       []json.RawMessage `json:"groups"`
+}
+
+type Group struct {
+	ID         int      `json:"id"`
+	Title      string   `json:"title"`
+	Contests   []int    `json:"contests"`
+	Students   []string `json:"students"`
+	Teachers   []string `json:"teachers"`
+	Admins     []string `json:"admins"`
+	InviteCode string   `json:"invite_code"`
 }

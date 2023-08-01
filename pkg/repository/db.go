@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/jackc/pgx/v4"
 	"github.com/spf13/viper"
@@ -87,6 +88,28 @@ func CreateTables() error {
             additional_info TEXT,
             tests JSONB
         );
+		
+		CREATE TABLE IF NOT EXISTS users (
+		   username      TEXT PRIMARY KEY,
+		   password_hash TEXT,
+		   last_name     TEXT,
+		   first_name    TEXT,
+		   email         TEXT,
+		   group_name    TEXT,
+		   role          TEXT,
+		   solved_tasks  TEXT[],
+		   groups        JSONB	
+		  );
+
+		CREATE TABLE IF NOT EXISTS groups (
+		    id SERIAL PRIMARY KEY,
+		    title TEXT,
+		    contests INTEGER[],
+		    students TEXT[],
+		    teachers TEXT[],
+		    admins TEXT[],
+		    invite_code TEXT
+		);
     `)
 	if err != nil {
 		return err
@@ -191,7 +214,7 @@ func GetContests() []Contest {
 		contests []Contest
 	)
 
-	rows, err := conn.Query(context.Background(), "SELECT * FROM contests")
+	rows, err := conn.Query(context.Background(), "SELECT * FROM contests ORDER BY id DESC")
 	if err != nil {
 		fmt.Println("Не удалось выполнить запрос:", err)
 		return []Contest{}
@@ -221,10 +244,10 @@ func GetContests() []Contest {
 	return contests
 }
 
-func GetContestInfo(id int) Contest {
+func GetContestInfoById(id int) (Contest, error) {
 	conn, err := pgx.Connect(context.Background(), DbURL)
 	if err != nil {
-		log.Fatalf("Failed to connect to the database: %v", err)
+		return Contest{}, err
 	}
 	defer conn.Close(context.Background())
 
@@ -238,15 +261,10 @@ func GetContestInfo(id int) Contest {
 		&contest.Tasks,
 	)
 	if err != nil {
-		if err == pgx.ErrNoRows {
-			fmt.Println("Запись с указанным ID не найдена")
-			return Contest{}
-		}
-		fmt.Println("Ошибка при выполнении запроса:", err)
-		return Contest{}
+		return Contest{}, err
 	}
 
-	return contest
+	return contest, nil
 }
 
 func TaskExist(taskID string) (bool, Task, error) {
@@ -357,4 +375,292 @@ func GetVerditctsOfContestTask(login string, contestID, contestTaskID int) ([]Su
 	}
 
 	return verdicts, nil
+}
+
+func CreateUser(user User) error {
+	conn, err := pgx.Connect(context.Background(), DbURL)
+	if err != nil {
+		return err
+	}
+	defer conn.Close(context.Background())
+
+	query := `
+  INSERT INTO users (username, password_hash, last_name, first_name, email, group_name, role, solved_tasks, groups)
+  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);
+ `
+
+	_, err = conn.Exec(context.Background(), query, user.Username, user.PasswordHash, user.LastName, user.FirstName, user.Email, user.Group, user.Role, user.SolvedTasks, user.Groups)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func CheckIfUserExists(login string) (bool, error) {
+	conn, err := pgx.Connect(context.Background(), DbURL)
+	if err != nil {
+		return false, err
+	}
+	defer conn.Close(context.Background())
+
+	var count int
+
+	query := `
+  SELECT COUNT(*) FROM users WHERE username = $1;
+ `
+
+	err = conn.QueryRow(context.Background(), query, login).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
+func AuthenticateUser(login, password string) (bool, error) {
+	conn, err := pgx.Connect(context.Background(), DbURL)
+	if err != nil {
+		return false, err
+	}
+	defer conn.Close(context.Background())
+
+	var count int
+
+	query := `
+  SELECT COUNT(*) FROM users WHERE username = $1 AND password_hash = $2;
+ `
+
+	err = conn.QueryRow(context.Background(), query, login, password).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
+func GetUserRole(username string) (string, error) {
+	conn, err := pgx.Connect(context.Background(), DbURL)
+	if err != nil {
+		return "", err
+	}
+	defer conn.Close(context.Background())
+
+	var role string
+
+	query := `
+  SELECT role FROM users WHERE username = $1;
+ `
+
+	err = conn.QueryRow(context.Background(), query, username).Scan(&role)
+	if err != nil {
+		return "", err
+	}
+
+	return role, nil
+}
+
+func AddUserToGroup(username string, groupId int, role string) error {
+	// TODO проверка был би там уже пользователь?
+	// если да, то можно его просто редиректнуть в эту группу
+
+	type GroupInfo struct {
+		GroupID int    `json:"group_id"`
+		Role    string `json:"role"`
+	}
+
+	groupInfo := GroupInfo{
+		GroupID: groupId,
+		Role:    role,
+	}
+
+	groupJSON, err := json.Marshal(groupInfo)
+	if err != nil {
+		return err
+	}
+
+	conn, err := pgx.Connect(context.Background(), DbURL)
+	if err != nil {
+		return fmt.Errorf("failed to connect to database: %w", err)
+	}
+	defer conn.Close(context.Background())
+
+	tx, err := conn.Begin(context.Background())
+	if err != nil {
+		return fmt.Errorf("failed to start transaction: %w", err)
+	}
+
+	_, err = conn.Exec(context.Background(), "UPDATE users SET groups = groups || $1 WHERE username = $2", groupJSON, username)
+
+	if err != nil {
+		tx.Rollback(context.Background())
+		fmt.Println(err)
+		return fmt.Errorf("failed to update user group fields: %w", err)
+	}
+
+	switch role {
+	case "student":
+		_, err = tx.Exec(context.Background(), "UPDATE groups SET students = array_append(students, $1) WHERE id = $2",
+			username, groupId)
+	case "teacher":
+		_, err = tx.Exec(context.Background(), "UPDATE groups SET teachers = array_append(teachers, $1) WHERE id = $2",
+			username, groupId)
+	case "admin":
+		_, err = tx.Exec(context.Background(), "UPDATE groups SET admins = array_append(admins, $1) WHERE id = $2",
+			username, groupId)
+	default:
+		return fmt.Errorf("unknown role: %s", role)
+	}
+
+	err = tx.Commit(context.Background())
+	if err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
+}
+
+func AddGroupWithMembers(group Group, memberUsernames []json.RawMessage) error {
+	conn, err := pgx.Connect(context.Background(), DbURL)
+	if err != nil {
+		return fmt.Errorf("failed to connect to database: %w", err)
+	}
+	defer conn.Close(context.Background())
+
+	// Начало транзакции
+	tx, err := conn.Begin(context.Background())
+	if err != nil {
+		return fmt.Errorf("failed to start transaction: %w", err)
+	}
+
+	// Вставка новой группы в таблицу groups
+	err = tx.QueryRow(context.Background(), "INSERT INTO groups (title, contests, students, teachers, admins) VALUES ($1, $2, $3, $4, $5) RETURNING id",
+		group.Title, group.Contests, group.Students, group.Teachers, group.Admins).Scan(&group.ID)
+	if err != nil {
+		tx.Rollback(context.Background())
+		return fmt.Errorf("failed to insert new group: %w", err)
+	}
+
+	// Обновление полей group для каждого пользователя из списка никнеймов
+
+	usernameRoleData := struct {
+		Username string `json:"username"`
+		Role     string `json:"role"`
+	}{}
+
+	for _, usernameData := range memberUsernames {
+		err = json.Unmarshal(usernameData, &usernameRoleData)
+		if err != nil {
+			tx.Rollback(context.Background())
+			return fmt.Errorf("failed to unmarshal username json: %w", err)
+		}
+
+		username := usernameRoleData.Username
+		role := usernameRoleData.Role
+
+		err = AddUserToGroup(username, group.ID, role)
+		if err != nil {
+			return err
+		}
+
+		if err != nil {
+			tx.Rollback(context.Background())
+			return fmt.Errorf("failed to add member %s to group: %w", username, err)
+		}
+	}
+
+	err = tx.Commit(context.Background())
+	if err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
+}
+
+func GetUserGroups(username string) ([]Group, error) {
+	conn, err := pgx.Connect(context.Background(), DbURL)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка при подключении к базе данных: %w", err)
+	}
+	defer conn.Close(context.Background())
+
+	// Запрос для получения всех групп пользователя
+	rows, err := conn.Query(context.Background(), "SELECT id, title, contests, students, teachers, admins FROM groups WHERE $1 = ANY (students)", username)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка при выполнении запроса: %w", err)
+	}
+	defer rows.Close()
+
+	var groups []Group
+
+	// Итерация по результатам запроса
+	for rows.Next() {
+		var group Group
+		err := rows.Scan(&group.ID, &group.Title, &group.Contests, &group.Students, &group.Teachers, &group.Admins)
+		if err != nil {
+			return nil, fmt.Errorf("ошибка при чтении результатов запроса: %w", err)
+		}
+
+		groups = append(groups, group)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("ошибка при обработке результатов запроса: %w", err)
+	}
+
+	return groups, nil
+}
+
+func GetGroupContests(groupId int) ([]Contest, error) {
+	conn, err := pgx.Connect(context.Background(), DbURL)
+	if err != nil {
+		return nil, fmt.Errorf("error connecting to the database: %w", err)
+	}
+	defer conn.Close(context.Background())
+
+	rows, err := conn.Query(context.Background(), "SELECT contests FROM groups WHERE id=$1", groupId)
+	if err != nil {
+		return nil, fmt.Errorf("error executing the query: %w", err)
+	}
+	defer rows.Close()
+
+	var contests []int
+	if rows.Next() {
+		err := rows.Scan(&contests)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning results: %w", err)
+		}
+
+		// Convert the int array to Contest struct array
+		var contestList []Contest
+		for _, contestID := range contests {
+			contest, err := GetContestInfoById(contestID)
+			if err != nil {
+				return nil, err
+			}
+			contestList = append(contestList, contest)
+		}
+
+		return contestList, nil
+	}
+
+	return nil, fmt.Errorf("group with ID %d not found", groupId)
+}
+
+func CheckInviteCode(inviteCode string) (bool, int, error) {
+	conn, err := pgx.Connect(context.Background(), DbURL)
+	if err != nil {
+		return false, 0, fmt.Errorf("failed to connect to the database: %w", err)
+	}
+	defer conn.Close(context.Background())
+
+	var groupID int
+	err = conn.QueryRow(context.Background(), "SELECT id FROM groups WHERE invite_code = $1", inviteCode).Scan(&groupID)
+	if err == pgx.ErrNoRows {
+		return false, 0, nil // No group found with the given invite_code
+	} else if err != nil {
+		return false, 0, fmt.Errorf("error while querying the database: %w", err)
+	}
+
+	return true, groupID, nil
 }
