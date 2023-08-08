@@ -27,6 +27,7 @@ type Contest struct {
 	Participants map[string]interface{} `json:"participants"`
 	Results      map[string]interface{} `json:"results"`
 	Tasks        map[string]interface{} `json:"tasks"`
+	GroupOwner   int                    `json:"group_owner"`
 }
 
 type Task struct {
@@ -51,14 +52,14 @@ type User struct {
 	Role         string            `json:"role"`
 	SolvedTasks  []string          `json:"solved_tasks"`
 	Groups       []json.RawMessage `json:"groups"`
+	Tasks        []json.RawMessage `json:"tasks"`
 }
 
 type Group struct {
 	ID         int      `json:"id"`
 	Title      string   `json:"title"`
-	Contests   []int    `json:"contests"`
 	Students   []string `json:"students"`
 	Teachers   []string `json:"teachers"`
 	Admins     []string `json:"admins"`
-	InviteCode string   `json:"invite_code"`
+	InviteCode []byte   `json:"invite_code"`
 }

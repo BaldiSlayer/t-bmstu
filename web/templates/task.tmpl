@@ -11,8 +11,6 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <!-- Bootstrap JS -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-
-
     </script>
 
     <style>
@@ -167,10 +165,9 @@
 
         // Проверка наличия строки с таким id
         const existingRow = table.querySelector(`tr[data-id="${data.id}"]`);
-        console.log(existingRow);
         if (existingRow) {
             existingRow.innerHTML = newRow.innerHTML;
-        } else if (data.id > parseInt(table.querySelector("tr:first-child td:first-child").innerText)) {
+        } else if ((table.querySelector("tr:first-child td:first-child") === null) || (data.id > parseInt(table.querySelector("tr:first-child td:first-child").innerText))) {
             table.insertBefore(newRow, table.firstChild);
         }
     }
@@ -180,7 +177,7 @@
 
     socket.onmessage = function(event) {
         const message = JSON.parse(event.data);
-        console.log(message);
+        // console.log(message);
 
         updateTable(message);
     };
@@ -214,15 +211,10 @@
         })
             .then(response => {
                 if (response.status === 200) {
-                    console.log('Request successful');
                     return response.json();
                 } else {
-                    console.log('Request failed with status:', response.status);
                     throw new Error('Request failed');
                 }
-            })
-            .then(data => {
-                console.log('Data:', data);
             })
             .catch(error => {
                 console.error('Error:', error);

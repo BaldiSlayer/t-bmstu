@@ -59,7 +59,8 @@ func CreateTables() error {
             access JSONB,
             participants JSONB,
             results JSONB,
-            tasks JSONB
+            tasks JSONB,
+            group_owner INTEGER
         );
 
         CREATE TABLE IF NOT EXISTS tasks (
@@ -83,13 +84,13 @@ func CreateTables() error {
 		   group_name    TEXT,
 		   role          TEXT,
 		   solved_tasks  TEXT[],
-		   groups        JSONB	
+		   groups        JSONB,
+		   tasks 		 JSONB
 		  );
 
 		CREATE TABLE IF NOT EXISTS groups (
 		    id SERIAL PRIMARY KEY,
 		    title TEXT,
-		    contests INTEGER[],
 		    students TEXT[],
 		    teachers TEXT[],
 		    admins TEXT[],
@@ -205,15 +206,16 @@ func GetContests() []Contest {
 			participants map[string]interface{}
 			results      map[string]interface{}
 			tasks        map[string]interface{}
+			group_owner  int
 		)
 
-		err := rows.Scan(&id, &title, &access, &participants, &results, &tasks)
+		err := rows.Scan(&id, &title, &access, &participants, &results, &tasks, &group_owner)
 		if err != nil {
 			fmt.Println("Не удалось получить данные строки:", err)
 			return []Contest{}
 		}
 		contests = append(contests, Contest{id, title, access, participants,
-			results, tasks})
+			results, tasks, group_owner})
 	}
 
 	return contests
@@ -234,6 +236,7 @@ func GetContestInfoById(id int) (Contest, error) {
 		&contest.Participants,
 		&contest.Results,
 		&contest.Tasks,
+		&contest.GroupOwner,
 	)
 	if err != nil {
 		return Contest{}, err
@@ -509,8 +512,8 @@ func AddGroupWithMembers(group Group, memberUsernames []json.RawMessage) error {
 	}
 
 	// Вставка новой группы в таблицу groups
-	err = tx.QueryRow(context.Background(), "INSERT INTO groups (title, contests, students, teachers, admins) VALUES ($1, $2, $3, $4, $5) RETURNING id",
-		group.Title, group.Contests, group.Students, group.Teachers, group.Admins).Scan(&group.ID)
+	err = tx.QueryRow(context.Background(), "INSERT INTO groups (title, students, teachers, admins) VALUES ($1, $2, $3, $4) RETURNING id",
+		group.Title, group.Students, group.Teachers, group.Admins).Scan(&group.ID)
 	if err != nil {
 		tx.Rollback(context.Background())
 		return fmt.Errorf("failed to insert new group: %w", err)
@@ -555,71 +558,90 @@ func AddGroupWithMembers(group Group, memberUsernames []json.RawMessage) error {
 func GetUserGroups(username string) ([]Group, error) {
 	conn, err := pgx.Connect(context.Background(), DbURL)
 	if err != nil {
-		return nil, fmt.Errorf("ошибка при подключении к базе данных: %w", err)
+		return nil, err
 	}
 	defer conn.Close(context.Background())
 
-	// Запрос для получения всех групп пользователя
-	rows, err := conn.Query(context.Background(), "SELECT id, title, contests, students, teachers, admins FROM groups WHERE $1 = ANY (students)", username)
+	rows, err := conn.Query(context.Background(), `
+		SELECT groups
+		FROM users
+		WHERE username = $1
+	`, username)
 	if err != nil {
-		return nil, fmt.Errorf("ошибка при выполнении запроса: %w", err)
+		return nil, err
 	}
 	defer rows.Close()
 
-	var groups []Group
-
-	// Итерация по результатам запроса
-	for rows.Next() {
-		var group Group
-		err := rows.Scan(&group.ID, &group.Title, &group.Contests, &group.Students, &group.Teachers, &group.Admins)
-		if err != nil {
-			return nil, fmt.Errorf("ошибка при чтении результатов запроса: %w", err)
-		}
-
-		groups = append(groups, group)
+	type GroupReference struct {
+		Role    string `json:"role"`
+		GroupID int    `json:"group_id"`
 	}
 
-	if err = rows.Err(); err != nil {
-		return nil, fmt.Errorf("ошибка при обработке результатов запроса: %w", err)
+	var groupReferences []GroupReference
+	if rows.Next() {
+		if err := rows.Scan(&groupReferences); err != nil {
+			return nil, err
+		}
+	}
+
+	var groups []Group
+	for _, ref := range groupReferences {
+		group, err := GetGroupByID(ref.GroupID)
+		if err != nil {
+			return nil, err
+		}
+		groups = append(groups, group)
 	}
 
 	return groups, nil
 }
 
-func GetGroupContests(groupId int) ([]Contest, error) {
+func GetGroupByID(groupID int) (Group, error) {
 	conn, err := pgx.Connect(context.Background(), DbURL)
 	if err != nil {
-		return nil, fmt.Errorf("error connecting to the database: %w", err)
+		return Group{}, err
 	}
 	defer conn.Close(context.Background())
 
-	rows, err := conn.Query(context.Background(), "SELECT contests FROM groups WHERE id=$1", groupId)
+	var group Group
+	conn.QueryRow(context.Background(), `
+		SELECT id, title, students, teachers, admins, invite_code
+		FROM groups
+		WHERE id = $1
+	`, groupID).Scan(&group.ID, &group.Title, &group.Students, &group.Teachers, &group.Admins, &group.InviteCode)
 	if err != nil {
-		return nil, fmt.Errorf("error executing the query: %w", err)
+		return Group{}, err
+	}
+	return group, nil
+}
+
+func GetGroupContests(groupOwner int) ([]Contest, error) {
+	conn, err := pgx.Connect(context.Background(), DbURL)
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close(context.Background())
+
+	rows, err := conn.Query(context.Background(), `
+		SELECT id, title, access, participants, results, tasks, group_owner
+		FROM contests
+		WHERE group_owner = $1
+	`, groupOwner)
+	if err != nil {
+		return nil, err
 	}
 	defer rows.Close()
 
-	var contests []int
-	if rows.Next() {
-		err := rows.Scan(&contests)
-		if err != nil {
-			return nil, fmt.Errorf("error scanning results: %w", err)
+	var contests []Contest
+	for rows.Next() {
+		var contest Contest
+		if err := rows.Scan(&contest.ID, &contest.Title, &contest.Access, &contest.Participants, &contest.Results, &contest.Tasks, &contest.GroupOwner); err != nil {
+			return nil, err
 		}
-
-		// Convert the int array to Contest struct array
-		var contestList []Contest
-		for _, contestID := range contests {
-			contest, err := GetContestInfoById(contestID)
-			if err != nil {
-				return nil, err
-			}
-			contestList = append(contestList, contest)
-		}
-
-		return contestList, nil
+		contests = append(contests, contest)
 	}
 
-	return nil, fmt.Errorf("group with ID %d not found", groupId)
+	return contests, nil
 }
 
 func CheckInviteCode(inviteCode string) (bool, int, error) {

@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"github.com/Baldislayer/t-bmstu/pkg/tasks_websocket"
+	"github.com/Baldislayer/t-bmstu/pkg/websockets"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"log"
@@ -9,7 +9,7 @@ import (
 )
 
 func (h *Handler) handleWebSocket(c *gin.Context) {
-	conn, err := tasks_websocket.Upgrader.Upgrade(c.Writer, c.Request, nil)
+	conn, err := websockets.Upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Println("Ошибка при обновлении соединения:", err)
 		return
@@ -24,9 +24,9 @@ func (h *Handler) handleWebSocket(c *gin.Context) {
 	}
 
 	// Добавляем соединение в мапу
-	tasks_websocket.Mu.Lock()
-	tasks_websocket.Connections[username] = conn
-	tasks_websocket.Mu.Unlock()
+	websockets.Mu.Lock()
+	websockets.Connections[username] = conn
+	websockets.Mu.Unlock()
 
 	for {
 		_, p, err := conn.ReadMessage()
@@ -49,9 +49,9 @@ func (h *Handler) handleWebSocket(c *gin.Context) {
 	}
 
 	// Удаляем соединение из мапы при закрытии
-	tasks_websocket.Mu.Lock()
-	delete(tasks_websocket.Connections, username)
-	tasks_websocket.Mu.Unlock()
+	websockets.Mu.Lock()
+	delete(websockets.Connections, username)
+	websockets.Mu.Unlock()
 }
 
 func (h *Handler) Htmlsome(c *gin.Context) {

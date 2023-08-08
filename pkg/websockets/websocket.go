@@ -1,4 +1,4 @@
-package tasks_websocket
+package websockets
 
 import (
 	"encoding/json"
@@ -25,7 +25,6 @@ func SendMessageToUser(username string, submission_full repository.Submission) {
 	Mu.Unlock()
 
 	if !ok {
-		log.Printf("Ошибка: соединение не найдено для пользователя %s", username)
 		return
 	}
 

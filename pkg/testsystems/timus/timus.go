@@ -3,6 +3,7 @@ package timus
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/Baldislayer/t-bmstu/pkg/repository"
 	"github.com/PuerkitoBio/goquery"
@@ -72,6 +73,37 @@ func parseTableToJSON(table *goquery.Selection) string {
 
 func (t *Timus) GetName() string {
 	return t.Name
+}
+
+func (t *Timus) CheckLanguage(language string) bool {
+	languagesDict := map[string]struct{}{
+		"FreePascal 2.6":      struct{}{},
+		"Visual C 2019":       struct{}{},
+		"Visual C++ 2019":     struct{}{},
+		"Visual C 2019 x64":   struct{}{},
+		"Visual C++ 2019 x64": struct{}{},
+		"GCC 9.2 x64":         struct{}{},
+		"G++ 9.2 x64":         struct{}{},
+		"Clang++ 10 x64":      struct{}{},
+		"Java 1.8":            struct{}{},
+		"Visual C# 2019":      struct{}{},
+		"Python 3.8 x64":      struct{}{},
+		"PyPy 3.8 x64":        struct{}{},
+		"Go 1.14 x64":         struct{}{},
+		"Ruby 1.9":            struct{}{},
+		"Haskell 7.6":         struct{}{},
+		"Scala 2.11":          struct{}{},
+		"Rust 1.58 x64":       struct{}{},
+		"Kotlin 1.4.0":        struct{}{},
+	}
+
+	_, exist := languagesDict[language]
+
+	if !exist {
+		return false
+	}
+
+	return true
 }
 
 func (t *Timus) GetLanguages() []string {
@@ -187,11 +219,17 @@ func Submit(judge_id string, accountName string, submission repository.Submissio
 
 	url_ := "https://acm.timus.ru/submit.aspx"
 
+	val, exist := d[submission.Language]
+
+	if !exist {
+		return "-1", errors.New("No such language")
+	}
+
 	r := url.Values{
 		"action":     {"submit"},
 		"SpaceID":    {"1"},
 		"JudgeID":    {judge_id},
-		"Language":   {d[submission.Language]},
+		"Language":   {val},
 		"ProblemNum": {submission.TaskID},
 		"Source":     {string(submission.Code)},
 	}
@@ -265,8 +303,6 @@ func (t *Timus) Submitter(wg *sync.WaitGroup, ch chan<- repository.Submission) {
 		accounts[i].UsageTime = time.Now().Add(-timeDifference)
 	}
 
-	fmt.Println(accounts)
-
 	for {
 		submissions, err := repository.GetSubmitsWithStatus(t.GetName(), 0)
 		if err != nil {
@@ -281,6 +317,9 @@ func (t *Timus) Submitter(wg *sync.WaitGroup, ch chan<- repository.Submission) {
 					id, err := Submit(account.JudgeID, account.Name, submission)
 					if err != nil {
 						fmt.Println(err)
+						// скипаем эту посылку
+						// подумать, может ее и удалить еще?
+						continue
 					}
 
 					// теперь надо передать по каналу, что был изменен статус этой задачи

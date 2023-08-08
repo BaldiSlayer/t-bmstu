@@ -11,15 +11,16 @@ type Handler struct {
 
 func (h *Handler) InitRoutes() *gin.Engine {
 	router := gin.New()
-
-	// store := cookie.NewStore([]byte(viper.GetString("SessionSecret")))
-	//store.Options(sessions.Options{
-	//	Path:     "/", // Установка пути для куки на "/"
-	//	MaxAge:   86400,
-	//	HttpOnly: true,
-	//	// TODO add Secure and other need able options
-	//})
-	//router.Use(sessions.Sessions(sessionName, store))
+	/*
+		store := cookie.NewStore([]byte(viper.GetString("SessionSecret")))
+		store.Options(sessions.Options{
+			Path:     "/", // Установка пути для куки на "/"
+			MaxAge:   86400,
+			HttpOnly: true,
+			// TODO add Secure and other need able options
+		})
+		router.Use(sessions.Sessions(sessionName, store))
+	*/
 
 	router.SetFuncMap(template.FuncMap{
 		"nl2br": nl2br,
@@ -50,13 +51,23 @@ func (h *Handler) InitRoutes() *gin.Engine {
 	view.Use(authMiddleware())
 	{
 		view.GET("/add", h.add)
-		view.GET("/tasks_websocket", h.Htmlsome)
+
+		forum := view.Group("/forum")
+		{
+			forum.GET("/")
+		}
+
+		view.GET("/websockets", h.Htmlsome)
 		view.GET("/home", h.home)
 		view.GET("/timus", h.timusTaskList)
-		view.GET("/problem/:id", h.getTask)
-		view.POST("/problem/:id/submit", h.submitTask)
 
-		view.GET("/contests", h.getContests)
+		problem := view.Group("/problem")
+		{
+			problem.GET("/:id", h.getTask)
+			problem.POST("/:id/submit", h.submitTask)
+		}
+
+		// view.GET("/contests", h.getContests)
 
 		contest := view.Group("/contest/:contest_id")
 		{
@@ -71,8 +82,11 @@ func (h *Handler) InitRoutes() *gin.Engine {
 			group := groups.Group("/:group_id")
 			{
 				group.GET("", h.getGroupContests)
-				group.GET("/contest/:contest_id/tasks", h.getContestTasks)
-				// TODO вести дальше до задач
+				groupContest := group.Group("/contest/:contest_id")
+				{
+					groupContest.GET("/tasks", h.getContestTasks)
+					// TODO вести дальше до задач
+				}
 			}
 		}
 	}

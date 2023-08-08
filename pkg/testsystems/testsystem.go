@@ -3,8 +3,8 @@ package testsystems
 import (
 	"fmt"
 	"github.com/Baldislayer/t-bmstu/pkg/repository"
-	"github.com/Baldislayer/t-bmstu/pkg/tasks_websocket"
 	"github.com/Baldislayer/t-bmstu/pkg/testsystems/timus"
+	"github.com/Baldislayer/t-bmstu/pkg/websockets"
 	"sync"
 )
 
@@ -17,6 +17,8 @@ var AllowedTestsystems = []TestSystem{
 type TestSystem interface {
 	// GetName - получить имя тестирущей системы
 	GetName() string
+	// CheckLanguage - проверяет, существует ли у данной тестирующей системы такой язык программирования
+	CheckLanguage(language string) bool
 	// GetLanguages - получить языки на которых можно сдавать в этой тестирующей системе
 	GetLanguages() []string
 	// Submitter - воркер, который занимается отправлением решений, и будет запускаться в отдельной горутине
@@ -57,7 +59,7 @@ func InitGorutines() error {
 				}
 
 				// передать по веб-сокету
-				go tasks_websocket.SendMessageToUser(msg.SenderLogin, msg)
+				go websockets.SendMessageToUser(msg.SenderLogin, msg)
 			}
 		}(ch)
 	}
@@ -72,10 +74,13 @@ func InitGorutines() error {
 					fmt.Println(err)
 				}
 
-				// если проверка была окончена, то записать это в соответствующем поле у пользователя
+				// если проверка была окончена, то записать это в соответствующем поле у пользователя и в контест
+				if msg.Status == 2 {
+
+				}
 
 				// передать по веб-сокету
-				go tasks_websocket.SendMessageToUser(msg.SenderLogin, msg)
+				go websockets.SendMessageToUser(msg.SenderLogin, msg)
 			}
 		}(ch)
 	}

@@ -34,7 +34,7 @@ func (h *Handler) getContestTasks(c *gin.Context) {
 	}
 	tasks := contest.Tasks
 
-	task_list := []ContestTableTask{}
+	taskList := []ContestTableTask{}
 
 	for key, value := range tasks {
 		_, taskParts, err := GetTaskPartsById(value.(string))
@@ -42,14 +42,14 @@ func (h *Handler) getContestTasks(c *gin.Context) {
 		if err != nil {
 			fmt.Print(err)
 		} else {
-			task_list = append(task_list, ContestTableTask{ID: key, Name: taskParts.Name})
+			taskList = append(taskList, ContestTableTask{ID: key, Name: taskParts.Name})
 		}
 	}
 
-	sort.Sort(ByID(task_list))
+	sort.Sort(ByID(taskList))
 
 	c.HTML(http.StatusOK, "constest_tasks_list.tmpl", gin.H{
-		"Tasks": task_list,
+		"Tasks": taskList,
 	})
 }
 

@@ -42,12 +42,12 @@ func (h *Handler) home(c *gin.Context) {
 
 func (h *Handler) add(c *gin.Context) {
 	members := []json.RawMessage{
-		json.RawMessage(`{"username": "sh", "role": "admin"}`),
+		json.RawMessage(`{"username": "sh", "role": "student"}`),
 	}
 
 	repository.AddGroupWithMembers(repository.Group{
-		Title:    "smth",
-		Contests: []int{},
+		Title:    "smth 2",
+		Students: []string{"sh"},
 	},
 		members)
 }

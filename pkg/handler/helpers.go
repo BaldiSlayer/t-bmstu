@@ -4,10 +4,11 @@ package handler
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"github.com/Baldislayer/t-bmstu/pkg/repository"
-	"github.com/Baldislayer/t-bmstu/pkg/tasks_websocket"
 	"github.com/Baldislayer/t-bmstu/pkg/testsystems"
+	"github.com/Baldislayer/t-bmstu/pkg/websockets"
 	"strings"
 	"time"
 )
@@ -94,13 +95,17 @@ func TaskSubmit(myTaskId string, login string, SourceCode string, Language strin
 		SubmissionNumber: "-",
 	}
 
+	if !taskInfo.onlineJudge.CheckLanguage(Language) {
+		return errors.New("no such language")
+	}
+
 	id, err := repository.AddSubmission(submission)
 	if err != nil {
 		return err
 	}
 
 	submission.ID = id
-	go tasks_websocket.SendMessageToUser(submission.SenderLogin, submission)
+	go websockets.SendMessageToUser(submission.SenderLogin, submission)
 
 	return err
 }
