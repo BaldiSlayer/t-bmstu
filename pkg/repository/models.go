@@ -3,19 +3,6 @@ package repository
 import "encoding/json"
 
 type Submission struct {
-	ID             int    `json:"id"`
-	SenderLogin    string `json:"sender_login"`
-	TaskID         string `json:"task_id"`
-	TestingSystem  string `json:"testing_system"`
-	Code           string `json:"code"`
-	SubmissionTime string `json:"submission_time"`
-	ContestID      int    `json:"contest_id"`
-	ContestTaskID  int    `json:"contest_task_id"`
-	Language       string `json:"language"`
-	SVerdictID     string `json:"sverdict_id"`
-}
-
-type SubmissionVerdict struct {
 	ID               int    `json:"id"`
 	SenderLogin      string `json:"sender_login"`
 	TaskID           string `json:"task_id"`
@@ -30,13 +17,7 @@ type SubmissionVerdict struct {
 	MemoryUsed       string `json:"memory_used"`
 	Test             string `json:"test"`
 	SubmissionNumber string `json:"submission_number"`
-}
-
-type UnverifiedSubmission struct {
-	SubmissionID         string `json:"submission_id"`
-	ExternalSubmissionID string `json:"external_submission_id"`
-	TestingSystem        string `json:"testing_system"`
-	JudgeId              string `json:"judge_id"`
+	Status           int    `json:"status"` // Статус проверки 0 - не отправлено, 1 - проверяется, 2 - проверка окончена
 }
 
 type Contest struct {

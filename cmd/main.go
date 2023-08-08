@@ -4,6 +4,7 @@ import (
 	"github.com/Baldislayer/t-bmstu"
 	"github.com/Baldislayer/t-bmstu/pkg/handler"
 	"github.com/Baldislayer/t-bmstu/pkg/repository"
+	"github.com/Baldislayer/t-bmstu/pkg/testsystems"
 	"github.com/spf13/viper"
 	"log"
 )
@@ -23,6 +24,10 @@ func main() {
 	handlers := new(handler.Handler)
 
 	srv := new(t_bmstu.Server)
+
+	// запуск горутин проверки задач
+	go testsystems.InitGorutines()
+
 	if err := srv.Run(viper.GetString("port"), handlers.InitRoutes()); err != nil {
 		log.Fatalf("Error occured while running http server: %s", err.Error())
 	}

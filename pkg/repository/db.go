@@ -7,7 +7,6 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/spf13/viper"
 	"log"
-	"strconv"
 	"time"
 )
 
@@ -30,21 +29,13 @@ func CreateTables() error {
 	}
 	defer conn.Close(context.Background())
 
-	_, err = conn.Exec(context.Background(), `
-        CREATE TABLE IF NOT EXISTS submissions (
-            id SERIAL PRIMARY KEY,
-            sender_login VARCHAR(255),
-            task_id VARCHAR(255),
-            testing_system VARCHAR(255),
-            code TEXT,
-            submission_time TIMESTAMPTZ,
-            contest_id INTEGER,
-            contest_task_id INTEGER,
-            language VARCHAR(255),
-            sverdict_id VARCHAR(255)
-        );
+	// пересмотреть `contest_task_id`, нужно ли его хранить?
+	// если нужно, то нужно ли хранить в таблице contests JSONB tasks?
+	// скорее всего нет
 
-        CREATE TABLE IF NOT EXISTS submissions_verdicts (
+	_, err = conn.Exec(context.Background(), `
+
+        CREATE TABLE IF NOT EXISTS submissions (
             id SERIAL PRIMARY KEY,
             sender_login VARCHAR(255),
             task_id VARCHAR(255),
@@ -58,14 +49,8 @@ func CreateTables() error {
             memory_used VARCHAR(255),
             test VARCHAR(255),
             language VARCHAR(255),
-            submission_number VARCHAR(255)
-        );
-
-        CREATE TABLE IF NOT EXISTS unverified_submissions (
-            submission_id VARCHAR(50) PRIMARY KEY,
-            external_submission_id VARCHAR(50),
-            testing_system VARCHAR(255),
-            judge_id VARCHAR(255)
+            submission_number VARCHAR(255),
+            status INTEGER                                                    
         );
 
         CREATE TABLE IF NOT EXISTS contests (
@@ -119,23 +104,18 @@ func CreateTables() error {
 	return nil
 }
 
-func AddSubmission(submission Submission) {
-	// Добавляем в базу данных
+func AddSubmission(submission Submission) (int, error) {
 	conn, err := pgx.Connect(context.Background(), DbURL)
 	if err != nil {
 		log.Fatalf("Failed to connect to the database: %v", err)
 	}
 	defer conn.Close(context.Background())
 
-	// логика - после того, как я принял запрос - я кидаю в таблицу посылок с вердиктами (SubmissionVerdict)
-	// затем я кидаю его в таблицу еще неотправленных посылок (submissions)
-	// на этом все заканчивается
-
-	verdict := SubmissionVerdict{
+	verdict := Submission{
 		SenderLogin:      submission.SenderLogin,
 		TaskID:           submission.TaskID,
 		TestingSystem:    submission.TestingSystem,
-		Code:             []byte(submission.Code),
+		Code:             submission.Code,
 		SubmissionTime:   submission.SubmissionTime,
 		ContestID:        submission.ContestID,
 		ContestTaskID:    submission.ContestTaskID,
@@ -145,31 +125,26 @@ func AddSubmission(submission Submission) {
 		MemoryUsed:       "-",
 		Test:             "-",
 		SubmissionNumber: "-",
+		Status:           0,
 	}
 
-	var verdictID int
+	var id int
 	err = conn.QueryRow(context.Background(), `
-    INSERT INTO submissions_verdicts (sender_login, task_id, testing_system, code, submission_time, contest_id, contest_task_id, language, verdict, execution_time, memory_used, test, submission_number)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-    RETURNING id
-`, verdict.SenderLogin, verdict.TaskID, verdict.TestingSystem, verdict.Code, verdict.SubmissionTime, verdict.ContestID, verdict.ContestTaskID, verdict.Language, verdict.Verdict, verdict.ExecutionTime, verdict.MemoryUsed, verdict.Test, verdict.SubmissionNumber).Scan(&verdictID)
+		INSERT INTO submissions (sender_login, task_id, testing_system, code, submission_time, contest_id, contest_task_id, language, verdict, execution_time, memory_used, test, submission_number, status)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+		RETURNING id;
+	`,
+		verdict.SenderLogin, verdict.TaskID, verdict.TestingSystem, verdict.Code, verdict.SubmissionTime, verdict.ContestID, verdict.ContestTaskID, verdict.Language, verdict.Verdict, verdict.ExecutionTime, verdict.MemoryUsed, verdict.Test, verdict.SubmissionNumber, verdict.Status).Scan(&id)
+
 	if err != nil {
 		log.Printf("Failed to insert submission verdict: %v", err)
+		return -1, err
 	}
 
-	submission.SVerdictID = strconv.Itoa(verdictID)
-
-	_, err = conn.Exec(context.Background(), `
-    INSERT INTO submissions (sender_login, task_id, testing_system, code, submission_time, contest_id, contest_task_id, language, sverdict_id)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-    `,
-		submission.SenderLogin, submission.TaskID, submission.TestingSystem, submission.Code, submission.SubmissionTime, submission.ContestID, submission.ContestTaskID, submission.Language, submission.SVerdictID)
-	if err != nil {
-		log.Printf("Failed to insert submission: %v", err)
-	}
+	return id, nil
 }
 
-func GetVerdicts(username string, taskId string, testingSystem string) []SubmissionVerdict {
+func GetVerdicts(username string, taskId string, testingSystem string) []Submission {
 	// TODO возвращать еще и ошибку
 	conn, err := pgx.Connect(context.Background(), DbURL)
 	if err != nil {
@@ -178,8 +153,8 @@ func GetVerdicts(username string, taskId string, testingSystem string) []Submiss
 	defer conn.Close(context.Background())
 
 	rows, err := conn.Query(context.Background(), `
-        SELECT id, sender_login, task_id, testing_system, code, submission_time, contest_id, contest_task_id, verdict, language, execution_time, memory_used, test, submission_number
-        FROM submissions_verdicts
+        SELECT id, sender_login, task_id, testing_system, code, submission_time, contest_id, contest_task_id, verdict, language, execution_time, memory_used, test, submission_number, status
+        FROM submissions
         WHERE sender_login = $1 AND task_id = $2 AND testing_system = $3
 		ORDER BY id DESC
     `, username, taskId, testingSystem)
@@ -188,11 +163,11 @@ func GetVerdicts(username string, taskId string, testingSystem string) []Submiss
 	}
 	defer rows.Close()
 
-	var verdicts []SubmissionVerdict
+	var verdicts []Submission
 	for rows.Next() {
-		var verdict SubmissionVerdict
+		var verdict Submission
 		var submissionTime time.Time
-		err := rows.Scan(&verdict.ID, &verdict.SenderLogin, &verdict.TaskID, &verdict.TestingSystem, &verdict.Code, &submissionTime, &verdict.ContestID, &verdict.ContestTaskID, &verdict.Verdict, &verdict.Language, &verdict.ExecutionTime, &verdict.MemoryUsed, &verdict.Test, &verdict.SubmissionNumber)
+		err := rows.Scan(&verdict.ID, &verdict.SenderLogin, &verdict.TaskID, &verdict.TestingSystem, &verdict.Code, &submissionTime, &verdict.ContestID, &verdict.ContestTaskID, &verdict.Verdict, &verdict.Language, &verdict.ExecutionTime, &verdict.MemoryUsed, &verdict.Test, &verdict.SubmissionNumber, &verdict.Status)
 		if err != nil {
 			log.Printf("Failed to fetch submission verdict: %v", err)
 		}
@@ -337,7 +312,7 @@ func GetTaskNameByID(taskID string) (string, error) {
 	return name, nil
 }
 
-func GetVerditctsOfContestTask(login string, contestID, contestTaskID int) ([]SubmissionVerdict, error) {
+func GetVerditctsOfContestTask(login string, contestID, contestTaskID int) ([]Submission, error) {
 	conn, err := pgx.Connect(context.Background(), DbURL)
 
 	if err != nil {
@@ -346,8 +321,8 @@ func GetVerditctsOfContestTask(login string, contestID, contestTaskID int) ([]Su
 
 	query := `
 		SELECT id, sender_login, task_id, testing_system, code, submission_time, contest_id,
-		contest_task_id, verdict, language, execution_time, memory_used, test, submission_number
-		FROM submissions_verdicts
+		contest_task_id, verdict, language, execution_time, memory_used, test, submission_number, status
+		FROM submissions
 		WHERE sender_login = $1 AND contest_id = $2 AND contest_task_id = $3
 		ORDER BY id DESC
 	`
@@ -358,11 +333,11 @@ func GetVerditctsOfContestTask(login string, contestID, contestTaskID int) ([]Su
 	}
 	defer rows.Close()
 
-	var verdicts []SubmissionVerdict
+	var verdicts []Submission
 	for rows.Next() {
-		var verdict SubmissionVerdict
+		var verdict Submission
 		var submissionTime time.Time
-		err := rows.Scan(&verdict.ID, &verdict.SenderLogin, &verdict.TaskID, &verdict.TestingSystem, &verdict.Code, &submissionTime, &verdict.ContestID, &verdict.ContestTaskID, &verdict.Verdict, &verdict.Language, &verdict.ExecutionTime, &verdict.MemoryUsed, &verdict.Test, &verdict.SubmissionNumber)
+		err := rows.Scan(&verdict.ID, &verdict.SenderLogin, &verdict.TaskID, &verdict.TestingSystem, &verdict.Code, &submissionTime, &verdict.ContestID, &verdict.ContestTaskID, &verdict.Verdict, &verdict.Language, &verdict.ExecutionTime, &verdict.MemoryUsed, &verdict.Test, &verdict.SubmissionNumber, &verdict.Status)
 		if err != nil {
 			log.Printf("Failed to fetch submission verdict: %v", err)
 		}
@@ -663,4 +638,97 @@ func CheckInviteCode(inviteCode string) (bool, int, error) {
 	}
 
 	return true, groupID, nil
+}
+
+func GetSubmitsWithStatus(testsystem string, status int) ([]Submission, error) {
+	conn, err := pgx.Connect(context.Background(), DbURL)
+
+	if err != nil {
+		return nil, err
+	}
+
+	query := `
+		SELECT id, sender_login, task_id, testing_system, code, submission_time, contest_id,
+		contest_task_id, verdict, language, execution_time, memory_used, test, submission_number, status
+		FROM submissions
+		WHERE status = $1 AND testing_system = $2
+		ORDER BY id ASC
+	`
+
+	rows, err := conn.Query(context.Background(), query, status, testsystem)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var verdicts []Submission
+	for rows.Next() {
+		var verdict Submission
+		var submissionTime time.Time
+		err := rows.Scan(&verdict.ID, &verdict.SenderLogin, &verdict.TaskID, &verdict.TestingSystem, &verdict.Code, &submissionTime, &verdict.ContestID, &verdict.ContestTaskID, &verdict.Verdict, &verdict.Language, &verdict.ExecutionTime, &verdict.MemoryUsed, &verdict.Test, &verdict.SubmissionNumber, &verdict.Status)
+		if err != nil {
+			log.Printf("Failed to fetch submission verdict: %v", err)
+		}
+		verdict.SubmissionTime = submissionTime.Format("2006-01-02 15:04:05")
+		verdicts = append(verdicts, verdict)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return verdicts, nil
+}
+
+func UpdateSubmissionData(submission Submission) error {
+	conn, err := pgx.Connect(context.Background(), DbURL)
+	if err != nil {
+		return err
+	}
+	defer conn.Close(context.Background())
+
+	query := `
+        UPDATE submissions
+        SET
+            sender_login = $1,
+            task_id = $2,
+            testing_system = $3,
+            code = $4,
+            submission_time = $5,
+            contest_id = $6,
+            contest_task_id = $7,
+            verdict = $8,
+            language = $9,
+            execution_time = $10,
+            memory_used = $11,
+            test = $12,
+            submission_number = $13,
+            status = $14
+        WHERE id = $15
+    `
+
+	_, err = conn.Exec(
+		context.Background(),
+		query,
+		submission.SenderLogin,
+		submission.TaskID,
+		submission.TestingSystem,
+		submission.Code,
+		submission.SubmissionTime,
+		submission.ContestID,
+		submission.ContestTaskID,
+		submission.Verdict,
+		submission.Language,
+		submission.ExecutionTime,
+		submission.MemoryUsed,
+		submission.Test,
+		submission.SubmissionNumber,
+		submission.Status,
+		submission.ID,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

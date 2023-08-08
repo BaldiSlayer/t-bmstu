@@ -6,8 +6,12 @@ import (
 	"fmt"
 	"github.com/Baldislayer/t-bmstu/pkg/repository"
 	"github.com/PuerkitoBio/goquery"
+	"io/ioutil"
 	"log"
+	"net/http"
+	"net/url"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -158,26 +162,226 @@ func (t *Timus) GetProblem(taskID string) (repository.Task, error) {
 	return task, nil
 }
 
-func (t *Timus) Submit(login string, id string, SourceCode string, Language string,
-	contestId int, contestTaskId int) error {
-	currentTime := time.Now()
-	currentTimeString := currentTime.Format("2006-01-02 15:04:05")
-	submission := repository.Submission{
-		SenderLogin:    login,
-		TaskID:         id,
-		TestingSystem:  t.GetName(),
-		Code:           SourceCode,
-		Language:       Language,
-		ContestTaskID:  contestTaskId,
-		ContestID:      contestId,
-		SubmissionTime: currentTimeString,
-		SVerdictID:     "-",
+// Submit - функция, которая отправляет посылку
+func Submit(judge_id string, accountName string, submission repository.Submission) (string, error) {
+	d := map[string]string{
+		"FreePascal 2.6":      "31",
+		"Visual C 2019":       "63",
+		"Visual C++ 2019":     "64",
+		"Visual C 2019 x64":   "65",
+		"Visual C++ 2019 x64": "66",
+		"GCC 9.2 x64":         "67",
+		"G++ 9.2 x64":         "68",
+		"Clang++ 10 x64":      "69",
+		"Java 1.8":            "32",
+		"Visual C# 2019":      "61",
+		"Python 3.8 x64":      "57",
+		"PyPy 3.8 x64":        "71",
+		"Go 1.14 x64":         "58",
+		"Ruby 1.9":            "18",
+		"Haskell 7.6":         "19",
+		"Scala 2.11":          "33",
+		"Rust 1.58 x64":       "72",
+		"Kotlin 1.4.0":        "60",
 	}
 
-	// TODO get err from here
-	repository.AddSubmission(submission)
+	url_ := "https://acm.timus.ru/submit.aspx"
 
-	return nil
+	r := url.Values{
+		"action":     {"submit"},
+		"SpaceID":    {"1"},
+		"JudgeID":    {judge_id},
+		"Language":   {d[submission.Language]},
+		"ProblemNum": {submission.TaskID},
+		"Source":     {string(submission.Code)},
+	}
+
+	resp, err := http.PostForm(url_, r)
+
+	if err != nil {
+		return "-1", err
+	}
+
+	// TODO научиться проверять есть ли ошибка на самом тимусе
+
+	defer resp.Body.Close()
+
+	// Чтение тела ответа
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading response body:", err)
+		return "-1", err
+	}
+
+	// Вывод тела ответа в консоль
+	htmlContent := string(body)
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(htmlContent))
+	if err != nil {
+		return "-1", err
+	}
+
+	taskID := submission.TaskID
+
+	foundedId := "-1"
+
+	doc.Find("table.status.status_nofilter tr").Each(func(i int, row *goquery.Selection) {
+		if foundedId == "-1" {
+
+			idValue := row.Find("td.id").Text()
+			coderValue := row.Find("td.coder a").Text()
+			problemValue := row.Find("td.problem a").Text()
+
+			problemValue = strings.Split(problemValue, ".")[0]
+
+			if coderValue == accountName && problemValue == taskID {
+				foundedId = idValue
+			}
+		}
+	})
+
+	return foundedId, nil
+}
+
+func (t *Timus) Submitter(wg *sync.WaitGroup, ch chan<- repository.Submission) {
+	defer wg.Done()
+
+	type Account struct {
+		Name      string    `json:"name"`
+		JudgeID   string    `json:"judge_id"`
+		UsageTime time.Time `json:"usage_time"`
+	}
+
+	// TODO добавить считывание с файла
+	accounts := []Account{
+		{
+			Name:    "$tup1d2281337",
+			JudgeID: "342187EL",
+		},
+	}
+
+	timeDifference := 11 * time.Second
+
+	for i := range accounts {
+		accounts[i].UsageTime = time.Now().Add(-timeDifference)
+	}
+
+	fmt.Println(accounts)
+
+	for {
+		submissions, err := repository.GetSubmitsWithStatus(t.GetName(), 0)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		// перебираем все решения
+		for _, submission := range submissions {
+			// перебираем аккаунты
+			for i, account := range accounts {
+				if elapsedTime := time.Now().Sub(account.UsageTime); elapsedTime > timeDifference {
+					id, err := Submit(account.JudgeID, account.Name, submission)
+					if err != nil {
+						fmt.Println(err)
+					}
+
+					// теперь надо передать по каналу, что был изменен статус этой задачи
+					submission.Status = 1
+					submission.Verdict = "Compiling"
+					submission.SubmissionNumber = id
+					ch <- submission
+
+					// устанавливаем время
+					accounts[i].UsageTime = time.Now()
+				}
+			}
+		}
+
+		time.Sleep(time.Second)
+	}
+}
+
+func constructURL(id string, count int) string {
+	return fmt.Sprintf("https://acm.timus.ru/status.aspx?space=1&count=%d&from=%s", count, id)
+}
+
+func (t *Timus) Checker(wg *sync.WaitGroup, ch chan<- repository.Submission) {
+	defer wg.Done()
+
+	for {
+		// получение отправленных, но еще не прошедших проверку посылок
+		submissions, err := repository.GetSubmitsWithStatus(t.GetName(), 1)
+
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		submissionsDict := make(map[string]repository.Submission)
+		submissionsIDs := make([]string, 0)
+
+		for _, submission := range submissions {
+			submissionsDict[submission.SubmissionNumber] = submission
+			submissionsIDs = append(submissionsIDs, submission.SubmissionNumber)
+		}
+
+		for len(submissions) != 0 {
+			count := 50
+			url := constructURL(submissions[0].SubmissionNumber, count)
+
+			doc, err := goquery.NewDocument(url)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			doc.Find("tr").Each(func(index int, rowHtml *goquery.Selection) {
+				class, exists := rowHtml.Attr("class")
+				if exists && (class == "even" || class == "odd") {
+					// Получение значения id посылки
+					idStr := strings.TrimSpace(rowHtml.Children().First().Text())
+					if err != nil {
+						log.Println("Error converting id:", err)
+						return
+					}
+
+					if _, exists := submissionsDict[idStr]; exists {
+						// удаление из словаря и списка
+						submission, exists := submissionsDict[idStr]
+						if !exists {
+							log.Println("Submission with ID not found:", idStr)
+							return
+						}
+						delete(submissionsDict, idStr)
+
+						for i, id := range submissionsIDs {
+							if id == idStr {
+								submissionsIDs = append(submissionsIDs[:i], submissionsIDs[i+1:]...)
+								break
+							}
+						}
+
+						submissions = submissions[1:]
+
+						verdict := strings.TrimSpace(rowHtml.Children().Eq(5).Text())
+						test := strings.TrimSpace(rowHtml.Children().Eq(6).Text())
+						executionTime := strings.TrimSpace(rowHtml.Children().Eq(7).Text())
+						memoryUsed := strings.TrimSpace(rowHtml.Children().Eq(8).Text())
+
+						submission.Verdict = verdict
+						submission.Test = test
+						submission.ExecutionTime = executionTime
+						submission.MemoryUsed = memoryUsed
+
+						if end_checing(verdict) {
+							submission.Status = 2
+						}
+
+						ch <- submission
+					}
+				}
+			})
+
+		}
+
+		time.Sleep(time.Second)
+	}
 }
 
 func GetTaskList(count int) ([]Task, error) {
@@ -208,4 +412,13 @@ func GetTaskList(count int) ([]Task, error) {
 	})
 
 	return tasks, nil
+}
+
+func end_checing(verdict string) bool {
+	if verdict == "Compilation error" || verdict == "Wrong answer" || verdict == "Accepted" ||
+		verdict == "Time limit exceeded" || verdict == "Memory limit exceeded" || verdict == "Runtime error (non-zero exit code)" ||
+		verdict == "Runtime error" {
+		return true
+	}
+	return false
 }

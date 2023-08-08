@@ -112,7 +112,7 @@
             </thead>
             <tbody>
             {{range .Submissions}}
-                <tr>
+                <tr data-id="{{.ID}}">
                     <td>{{.ID}}</td>
                     <td>{{.Language}}</td>
                     <td>
@@ -141,7 +141,58 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.0.0-beta1/js/bootstrap.bundle.min.js"></script>
 
 <script>
-    // Function to update selected item text
+    function updateTable(data) {
+        const table = document.querySelector(".table tbody");
+        const newRow = document.createElement("tr");
+
+        newRow.setAttribute("data-id", data.id);
+
+        let verdictClass = "";
+        if (data.verdict === "Accepted") {
+            verdictClass = "badge-success";
+        } else if (data.verdict === "Waiting") {
+            verdictClass = "badge-warning";
+        } else {
+            verdictClass = "badge-danger";
+        }
+
+        newRow.innerHTML = `
+        <td>${data.id}</td>
+        <td>${data.language}</td>
+        <td><span class="badge ${verdictClass}">${data.verdict}</span></td>
+        <td>${data.test}</td>
+        <td>${data.execution_time}</td>
+        <td>${data.memory_used}</td>
+    `;
+
+        // Проверка наличия строки с таким id
+        const existingRow = table.querySelector(`tr[data-id="${data.id}"]`);
+        console.log(existingRow);
+        if (existingRow) {
+            existingRow.innerHTML = newRow.innerHTML;
+        } else if (data.id > parseInt(table.querySelector("tr:first-child td:first-child").innerText)) {
+            table.insertBefore(newRow, table.firstChild);
+        }
+    }
+
+
+    const socket = new WebSocket("ws://127.0.0.1:8080/api/ws");
+
+    socket.onmessage = function(event) {
+        const message = JSON.parse(event.data);
+        console.log(message);
+
+        updateTable(message);
+    };
+
+    socket.onclose = function(event) {
+        console.log(event)
+    };
+
+    socket.onerror = function(event) {
+        console.log(event)
+    };
+
     function selectItem(item) {
         document.getElementById('dropdownMenuButton').innerText = item;
     }
@@ -162,7 +213,16 @@
             })
         })
             .then(response => {
-                console.log('Response:', response);
+                if (response.status === 200) {
+                    console.log('Request successful');
+                    return response.json();
+                } else {
+                    console.log('Request failed with status:', response.status);
+                    throw new Error('Request failed');
+                }
+            })
+            .then(data => {
+                console.log('Data:', data);
             })
             .catch(error => {
                 console.error('Error:', error);

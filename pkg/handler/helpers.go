@@ -6,8 +6,10 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/Baldislayer/t-bmstu/pkg/repository"
+	"github.com/Baldislayer/t-bmstu/pkg/tasks_websocket"
 	"github.com/Baldislayer/t-bmstu/pkg/testsystems"
 	"strings"
+	"time"
 )
 
 type TaskInfo struct {
@@ -74,12 +76,31 @@ func TaskSubmit(myTaskId string, login string, SourceCode string, Language strin
 		return err
 	}
 
-	err = taskInfo.onlineJudge.Submit(login,
-		taskInfo.id,
-		SourceCode,
-		Language,
-		contestId,
-		contestTaskId)
+	currentTime := time.Now()
+	currentTimeString := currentTime.Format("2006-01-02 15:04:05")
+	submission := repository.Submission{
+		SenderLogin:      login,
+		TaskID:           taskInfo.id,
+		TestingSystem:    taskInfo.onlineJudge.GetName(),
+		Code:             []byte(SourceCode),
+		Language:         Language,
+		ContestTaskID:    contestTaskId,
+		ContestID:        contestId,
+		SubmissionTime:   currentTimeString,
+		Verdict:          "Waiting",
+		ExecutionTime:    "-",
+		MemoryUsed:       "-",
+		Test:             "-",
+		SubmissionNumber: "-",
+	}
+
+	id, err := repository.AddSubmission(submission)
+	if err != nil {
+		return err
+	}
+
+	submission.ID = id
+	go tasks_websocket.SendMessageToUser(submission.SenderLogin, submission)
 
 	return err
 }

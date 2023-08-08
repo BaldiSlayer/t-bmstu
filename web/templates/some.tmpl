@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Example</title>
+</head>
+<body>
+<h1>WebSocket Example</h1>
+<input type="text" id="message" placeholder="Enter message">
+<button id="send">Send</button>
+<div id="output"></div>
+
+<script>
+    const outputDiv = document.getElementById("output");
+    const messageInput = document.getElementById("message");
+    const sendButton = document.getElementById("send");
+
+    const socket = new WebSocket("ws://127.0.0.1:8080/api/ws");
+
+    socket.onmessage = function(event) {
+        const message = event.data;
+        outputDiv.innerHTML += `<p>Received: ${message}</p>`;
+    };
+
+    socket.onclose = function(event) {
+        outputDiv.innerHTML += "<p>Connection closed</p>";
+    };
+
+    socket.onerror = function(event) {
+        outputDiv.innerHTML += "<p>Error occurred</p>";
+    };
+
+    sendButton.addEventListener("click", function() {
+        const message = messageInput.value;
+        socket.send(message);
+        outputDiv.innerHTML += `<p>Sent: ${message}</p>`;
+        messageInput.value = "";
+    });
+</script>
+</body>
+</html>
