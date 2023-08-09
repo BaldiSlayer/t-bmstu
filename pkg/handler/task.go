@@ -65,7 +65,7 @@ func (h *Handler) getTask(c *gin.Context) {
 		}
 	}
 
-	c.HTML(http.StatusOK, "task.tmpl", gin.H{
+	c.HTML(http.StatusOK, "task-page.tmpl", gin.H{
 		"Task":        taskParts,
 		"Tests":       tests,
 		"Languages":   taskInfo.onlineJudge.GetLanguages(),

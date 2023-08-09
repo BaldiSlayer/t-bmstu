@@ -27,6 +27,8 @@ func (h *Handler) InitRoutes() *gin.Engine {
 	})
 	router.LoadHTMLGlob("web/templates/*")
 	router.Static("/images", "web/static/images")
+	router.Static("/styles", "web/static/styles")
+	router.Static("/scripts", "web/static/scripts")
 
 	auth := router.Group("/auth")
 	{

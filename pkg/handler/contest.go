@@ -99,7 +99,7 @@ func (h *Handler) getContestTask(c *gin.Context) {
 
 		submissions, err := repository.GetVerditctsOfContestTask(c.GetString("username"), contestId, intContestTaskId)
 
-		c.HTML(http.StatusOK, "task.tmpl", gin.H{
+		c.HTML(http.StatusOK, "task-page.tmpl", gin.H{
 			"Task":        taskParts,
 			"Tests":       tests,
 			"Languages":   taskInfo.onlineJudge.GetLanguages(),

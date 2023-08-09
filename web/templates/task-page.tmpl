@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Task.Name}}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="/styles/task-page.css" rel="stylesheet">
+
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/javascript/javascript.min.js"></script>
+</head>
+
+<body>
+    <div>
+        <div class="avatar-container">
+            <a href="/profile">
+                <img src="https://avatars.githubusercontent.com/u/77489413?v=4" alt="User Avatar" class="user-avatar">
+            </a>
+        </div>
+    
+        <div class="d-flex">
+            <nav id="sidebar" class="collapsed">
+                <a class="d-flex align-items-center link-dark text-decoration-none" onclick="toggleSidebar()">
+                    <i class="bi bi-list icons"></i>
+                </a>   
+    
+                <a class="d-flex align-items-center link-dark text-decoration-none theme-toggle-container" id="theme-toggle" onclick="toggleTheme()">
+                    
+                    <span class="me-2 icons">
+                        <i class="bi bi-moon-fill"></i>
+                        <i class="bi bi-sun-fill d-none"></i>
+                    </span>
+                    
+                    <span class="sidebar-label">Ночь</span>
+                </a>   
+            
+                <div class="center-vertically">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <a href="#" class="d-flex align-items-center link-dark text-decoration-none">
+                                <span class="me-2 icons"><i class="bi bi-house-door"></i></span>
+                                <span class="sidebar-label">Home</span>
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="#" class="d-flex align-items-center link-dark text-decoration-none">
+                                <span class="me-2 icons"><i class="bi bi-code-square"></i></span>
+                                <span class="sidebar-label">hw_iu9_bmstu</span>
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="#" class="d-flex align-items-center link-dark text-decoration-none">
+                                <span class="me-2 icons"><i class="bi bi-chat-left-dots"></i></span>
+                                <span class="sidebar-label">Форум</span>
+                            </a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="#" class="d-flex align-items-center link-dark text-decoration-none">
+                                <span class="me-2 icons"><i class="bi bi-gear"></i></span>
+                                <span class="sidebar-label">Настройки</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>                         
+            </nav>
+
+    
+            <div id="content" class="collapsed">
+                <div class="center-container">
+                    <h1 class="blue-text text-center">{{.Task.Name}}</h1>
+                    <div class="problem_limits">
+                        <!-- TODO вставить ограничения -->
+                    </div>
+                </div>
+
+                {{.Task.Condition}}
+        
+                <h2 class="blue-text"> Формат ввода </h2>
+                {{.Task.InputData}}
+
+                <h2 class="blue-text"> Формат вывода </h2>
+                {{.Task.OutputData}}
+
+                <h2 class="blue-text"> Примеры тестов </h2>
+                <table>
+                    <tr>
+                        <th>Input</th>
+                        <th>Output</th>
+                    </tr>
+                    {{range $index, $test := .Tests}}
+                    <tr>
+                        <td>{{nl2br $test.Input}}</td>
+                        <td>{{nl2br $test.Output}}</td>
+                    </tr>
+                    {{end}}
+                </table>
+
+                <h2> Источник задачи </h2>
+                {{nl2br .Task.Source}}
+
+
+                <!-- Посылки !-->
+                <div class="form-group container mt-5">
+                    <div class="mt-4">
+                        <div class="dropdown mt-4" style="margin-bottom: 2rem;">
+                            <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Select an language
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                {{range .Languages}}
+                                <li><a class="dropdown-item" onclick="selectItem('{{.}}')">{{.}}</a></li>
+                                {{end}}
+                            </ul>
+                        </div>
+
+                        <div class="coding-area">
+                            <textarea id="Code" rows="10" placeholder="Enter code"></textarea>
+                        </div>
+
+                    </div>
+
+                    <button type="submit" class="btn btn-primary mt-2" onclick="sendRequest()">Submit</button>
+
+                    <div class="container mt-4">
+                        <h1>Посылки</h1>
+                        <table class="table table-striped">
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Компилятор</th>
+                                <th>Вердикт</th>
+                                <th>Тест</th>
+                                <th>Время</th>
+                                <th>Память</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {{range .Submissions}}
+                            <tr data-id="{{.ID}}">
+                                <td>{{.ID}}</td>
+                                <td>{{.Language}}</td>
+                                <td>
+                                    {{if eq .Verdict "Accepted"}}
+                                    <span class="badge badge-success">{{.Verdict}}</span>
+                                    {{else if eq .Verdict "Waiting"}}
+                                    <span class="badge badge-warning">{{.Verdict}}</span>
+                                    {{else if eq .Verdict "Compiling"}}
+                                    <span class="badge badge-info">{{.Verdict}}</span>
+                                    {{else}}
+                                    <span class="badge badge-danger">{{.Verdict}}</span>
+                                    {{end}}
+                                </td>
+                                <td>{{.Test}}</td>
+                                <td>{{.ExecutionTime}}</td>
+                                <td>{{.MemoryUsed}}</td>
+                            </tr>
+                            {{end}}
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>        
+        </div>
+
+    </div>
+
+    <script>
+        // Инициализация CodeMirror для элемента с id="Code"
+        var codeTextArea = document.getElementById("Code");
+        var codeMirrorEditor = CodeMirror.fromTextArea(codeTextArea, {
+            mode: "javascript", // Установите нужный режим синтаксиса
+            lineNumbers: true, // Показывать номера строк
+            theme: "default" // Установите нужную тему
+        });
+        codeMirrorEditor.setSize(null, 500);
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/scripts/task-page.js"></script>
+</body>
+
+</html>
