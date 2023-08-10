@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/Baldislayer/t-bmstu/pkg/repository"
 	"github.com/Baldislayer/t-bmstu/pkg/testsystems/timus"
 	"github.com/gin-gonic/gin"
@@ -41,15 +40,22 @@ func (h *Handler) getTask(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
 	taskParts, err := GetTaskParts(taskId, &taskInfo)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
-	submissons := repository.GetVerdicts(c.GetString("username"), taskInfo.id, taskInfo.onlineJudge.GetName())
+	submissons, err := repository.GetVerditctsOfContestTask(c.GetString("username"), -1, -1)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
 	type Test struct {
 		Input  string `json:"input"`
@@ -60,7 +66,7 @@ func (h *Handler) getTask(c *gin.Context) {
 	if testStr, ok := taskParts.Tests["tests"].(string); ok {
 		err := json.Unmarshal([]byte(testStr), &tests)
 		if err != nil {
-			fmt.Println("Error:", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 	}
@@ -94,6 +100,7 @@ func (h *Handler) submitTask(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{

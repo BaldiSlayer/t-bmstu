@@ -58,8 +58,22 @@ function updateTable(data) {
     }
 }
 
+const url = window.location.href;
+const parts = url.split("/");
+const host = window.location.host;
 
-const socket = new WebSocket("ws://127.0.0.1:8080/api/ws");
+// Поиск индексов contest_id и problem_id в массиве parts
+const contestIndex = parts.indexOf("contest");
+const problemIndex = parts.indexOf("problem");
+
+let contestId = -1;
+const problemId = parts[problemIndex + 1];
+if (contestIndex !== -1 && problemIndex !== -1) {
+    contestId = parts[contestIndex + 1];
+}
+
+const socket = new WebSocket(`ws://${host}/api/ws/contest/${contestId}/problem/${problemId}`);
+
 
 socket.onmessage = function(event) {
     const message = JSON.parse(event.data);
@@ -77,14 +91,40 @@ socket.onerror = function(event) {
 };
 
 function selectItem(item) {
+    let selectedMode = "text/plain"; // Режим по умолчанию для неизвестных языков
+
+    const forChecking = item.toLowerCase()
+    if (forChecking.includes("c++") || forChecking.includes("g++") | forChecking.includes("clang")) {
+        selectedMode = "text/x-c++src"
+    } else if (forChecking.includes("python") || forChecking.includes("pypy")) {
+        selectedMode = "text/x-python"
+    } else if (forChecking.includes("java")) {
+        selectedMode = "text/x-java"
+    }
+    else if (forChecking.includes("go")) {
+        selectedMode = "text/x-go"
+    } else if (forChecking.includes("kotlin")) {
+        selectedMode = "text/x-kotlin"
+    } else if (forChecking.includes("java")) {
+        selectedMode = "text/x-java"
+    } else if (forChecking.includes("visual c")) {
+        selectedMode = "text/x-csrc"
+    } else if (forChecking.includes("pascal")) {
+        selectedMode = "text/x-pascal"
+    }
+
+    codeMirrorEditor.setOption("mode", selectedMode);
+
     document.getElementById('dropdownMenuButton').innerText = item;
 }
 
 function sendRequest() {
-    // construct the API URL
     const apiUrl = window.location.href + '/submit'
 
-    // send a POST request with JSON data
+    if (document.getElementById('dropdownMenuButton').innerText === 'Select an language ') {
+        alert("Выбери язык программирования!")
+    }
+
     fetch(apiUrl, {
         method: 'POST',
         headers: {

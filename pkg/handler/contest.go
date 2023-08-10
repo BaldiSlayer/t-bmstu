@@ -59,7 +59,7 @@ func (h *Handler) getContestTask(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 
-	taskId := c.Param("task_id")
+	taskId := c.Param("problem_id")
 	contest, err := repository.GetContestInfoById(contestId)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
@@ -126,7 +126,7 @@ func (h *Handler) submitContestTask(c *gin.Context) {
 		return
 	}
 
-	contestTaskId, err := strconv.Atoi(c.Param("task_id"))
+	contestTaskId, err := strconv.Atoi(c.Param("problem_id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 		return

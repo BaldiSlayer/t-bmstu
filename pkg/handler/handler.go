@@ -24,6 +24,9 @@ func (h *Handler) InitRoutes() *gin.Engine {
 
 	router.SetFuncMap(template.FuncMap{
 		"nl2br": nl2br,
+		"inc": func(index int) int {
+			return index + 1
+		},
 	})
 	router.LoadHTMLGlob("web/templates/*")
 	router.Static("/images", "web/static/images")
@@ -46,7 +49,7 @@ func (h *Handler) InitRoutes() *gin.Engine {
 	api := router.Group("/api")
 	api.Use(authMiddleware())
 	{
-		api.GET("/ws", h.handleWebSocket)
+		api.GET("/ws/contest/:contest_id/problem/:problem_id", h.handleWebSocket)
 	}
 
 	view := router.Group("/view")
@@ -73,9 +76,9 @@ func (h *Handler) InitRoutes() *gin.Engine {
 
 		contest := view.Group("/contest/:contest_id")
 		{
-			contest.GET("/tasks", h.getContestTasks)
-			contest.GET("/task/:task_id", h.getContestTask)
-			contest.POST("/task/:task_id/submit", h.submitContestTask)
+			contest.GET("/problems", h.getContestTasks)
+			contest.GET("/problem/:problem_id", h.getContestTask)
+			contest.POST("/problem/:problem_id/submit", h.submitContestTask)
 		}
 
 		groups := view.Group("/group")

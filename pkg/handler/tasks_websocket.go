@@ -3,9 +3,9 @@ package handler
 import (
 	"github.com/Baldislayer/t-bmstu/pkg/websockets"
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 func (h *Handler) handleWebSocket(c *gin.Context) {
@@ -23,34 +23,49 @@ func (h *Handler) handleWebSocket(c *gin.Context) {
 		return
 	}
 
-	// Добавляем соединение в мапу
-	websockets.Mu.Lock()
-	websockets.Connections[username] = conn
-	websockets.Mu.Unlock()
+	// Получение параметра problem_id из пути
+	problemID := c.Param("problem_id")
 
-	for {
-		_, p, err := conn.ReadMessage()
+	val := c.Param("contest_id")
+	contestID, err := strconv.Atoi(val)
+	if err != nil || val == "" {
+		contestID = -1
+	}
+
+	contestProblemID := -1
+	if contestID != -1 {
+		contestProblemID, err = strconv.Atoi(problemID)
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
-				log.Printf("Ошибка чтения сообщения от пользователя %s: %v", username, err)
-			}
-			break
-		}
-
-		log.Printf("Получено сообщение от пользователя %s: %s", username, p)
-
-		// Пример эхо-ответа (отправка обратно полученного сообщения)
-		if err := conn.WriteMessage(websocket.TextMessage, p); err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
-				log.Printf("Ошибка отправки сообщения пользователю %s: %v", username, err)
-			}
-			break
+			return
 		}
 	}
 
-	// Удаляем соединение из мапы при закрытии
+	// Добавляем соединение в мапу
 	websockets.Mu.Lock()
-	delete(websockets.Connections, username)
+	connections, ok := websockets.Connections[username]
+	if !ok {
+		connections = []websockets.UserConnections{}
+	}
+	connections = append(connections, websockets.UserConnections{
+		Connection:       conn,
+		ProblemId:        problemID,
+		ContestId:        contestID,
+		ContestProblemId: contestProblemID,
+	})
+	websockets.Connections[username] = connections
+	websockets.Mu.Unlock()
+
+	// Проверка на разрыв соединения
+	for i, connData := range connections {
+		_, _, err := connData.Connection.ReadMessage()
+		if err != nil {
+			// Соединение разорвано, удаляем его из списка
+			connections = append(connections[:i], connections[i+1:]...)
+			break
+		}
+	}
+	websockets.Mu.Lock()
+	websockets.Connections[username] = connections
 	websockets.Mu.Unlock()
 }
 

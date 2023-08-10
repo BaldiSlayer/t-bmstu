@@ -1,6 +1,7 @@
 package websockets
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"github.com/Baldislayer/t-bmstu/pkg/repository"
 	"github.com/gorilla/websocket"
@@ -15,13 +16,21 @@ var Upgrader = websocket.Upgrader{
 	},
 }
 
-var Connections = make(map[string]*websocket.Conn) // Мапа для хранения соединений по юзернейму
-var Mu sync.Mutex                                  // Мьютекс для безопасного доступа к мапе connections
+// Структура для хранения соединений пользователя и текущей страницы
+type UserConnections struct {
+	Connection       *websocket.Conn
+	ProblemId        string
+	ContestId        int
+	ContestProblemId int
+}
 
-// Функция для отправки объекта Submission по веб-сокету по нику
-func SendMessageToUser(username string, submission_full repository.Submission) {
+var Connections = make(map[string][]UserConnections) // Мапа для хранения соединений по юзернейму
+var Mu sync.Mutex                                    // Мьютекс для безопасного доступа к мапе Connections
+
+// Функция для отправки объекта Submission по веб-сокету по нику и странице
+func SendMessageToUser(username string, submissionFull repository.Submission) {
 	Mu.Lock()
-	conn, ok := Connections[username]
+	userConns, ok := Connections[username]
 	Mu.Unlock()
 
 	if !ok {
@@ -38,12 +47,12 @@ func SendMessageToUser(username string, submission_full repository.Submission) {
 	}
 
 	submission := SendingDataSubmission{
-		ID:            submission_full.ID,
-		Verdict:       submission_full.Verdict,
-		Language:      submission_full.Language,
-		ExecutionTime: submission_full.ExecutionTime,
-		MemoryUsed:    submission_full.MemoryUsed,
-		Test:          submission_full.Test,
+		ID:            submissionFull.ID,
+		Verdict:       submissionFull.Verdict,
+		Language:      submissionFull.Language,
+		ExecutionTime: submissionFull.ExecutionTime,
+		MemoryUsed:    submissionFull.MemoryUsed,
+		Test:          submissionFull.Test,
 	}
 
 	// Преобразуем объект Submission в JSON
@@ -53,5 +62,12 @@ func SendMessageToUser(username string, submission_full repository.Submission) {
 		return
 	}
 
-	conn.WriteMessage(websocket.TextMessage, message)
+	// Отправляем сообщение только на нужной странице
+	for _, conn := range userConns {
+		if (conn.ContestId != -1 && conn.ContestId == submissionFull.ContestID &&
+			conn.ContestProblemId == submissionFull.ContestTaskID) || (submissionFull.ContestID == -1 &&
+			conn.ProblemId == base64.StdEncoding.EncodeToString([]byte(submissionFull.TestingSystem+submissionFull.TaskID))) {
+			conn.Connection.WriteMessage(websocket.TextMessage, message)
+		}
+	}
 }
