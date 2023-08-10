@@ -5,6 +5,7 @@ import (
 	"github.com/Baldislayer/t-bmstu/pkg/repository"
 	"github.com/Baldislayer/t-bmstu/pkg/testsystems/timus"
 	"github.com/gin-gonic/gin"
+	"html/template"
 	"net/http"
 	"strconv"
 )
@@ -73,6 +74,9 @@ func (h *Handler) getTask(c *gin.Context) {
 
 	c.HTML(http.StatusOK, "task-page.tmpl", gin.H{
 		"Task":        taskParts,
+		"Condition":   template.HTML(taskParts.Condition),
+		"InputData":   template.HTML(taskParts.InputData),
+		"OutputData":  template.HTML(taskParts.OutputData),
 		"Tests":       tests,
 		"Languages":   taskInfo.onlineJudge.GetLanguages(),
 		"Submissions": submissons,

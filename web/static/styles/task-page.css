@@ -139,6 +139,46 @@ body {
     padding: 8px;
 }
 
-.table.table-striped {
-    max-width: 100%; /* Ensure table does not exceed parent's width */
+
+
+.test-container {
+    display: flex;
+    gap: 20px;
+    align-items: stretch; /* Make both boxes same height */
+}
+
+.test-box {
+    position: relative; /* Add position relative for the copy icon positioning */
+    display: flex;
+    flex-direction: column;
+    border: 2px solid #eaeaea;
+    padding: 10px;
+    border-radius: 10px;
+    width: 45%; /* Adjust as needed */
+    background-color: #f9f9f9;
+}
+
+.test-input, .test-output {
+    color: #007bff;
+    margin-bottom: 10px;
+    flex-grow: 1;
+    display: flex;
+    align-items: center; /* Center vertically */
+    overflow-x: auto;
+}
+
+.test-output {
+    color: #28a745;
+}
+
+.copy-icon {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    cursor: pointer;
+    display: none;
+}
+
+.test-box:hover .copy-icon {
+    display: block;
 }

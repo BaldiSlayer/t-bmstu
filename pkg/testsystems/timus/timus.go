@@ -34,8 +34,14 @@ func getMiddle(start *goquery.Selection, end string) string {
 	currentElement := start
 
 	for currentElement.Length() != 0 && !(strings.HasPrefix(currentElement.Text(), end)) {
-		if currentElement.Is("div.problem_par") {
-			text += currentElement.Text() + " "
+		if currentElement.Is("div.problem_par") || currentElement.Is("div.problem_centered_picture") {
+			htmlContent, err := currentElement.Html()
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			htmlContent = strings.Replace(htmlContent, "/image", "https://acm.timus.ru/image", -1)
+			text += htmlContent + " "
 		}
 		currentElement = currentElement.Next()
 	}
@@ -129,9 +135,9 @@ func (t *Timus) GetLanguages() []string {
 }
 
 func (t *Timus) GetProblem(taskID string) (repository.Task, error) {
-	url := fmt.Sprintf("https://acm.timus.ru/problem.aspx?space=1&locale=ru&num=%s", taskID)
+	taskUrl := fmt.Sprintf("https://acm.timus.ru/problem.aspx?space=1&locale=ru&num=%s", taskID)
 
-	doc, err := goquery.NewDocument(url)
+	doc, err := goquery.NewDocument(taskUrl)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -195,7 +201,7 @@ func (t *Timus) GetProblem(taskID string) (repository.Task, error) {
 }
 
 // Submit - функция, которая отправляет посылку
-func Submit(judge_id string, accountName string, submission repository.Submission) (string, error) {
+func Submit(judgeId string, accountName string, submission repository.Submission) (string, error) {
 	d := map[string]string{
 		"FreePascal 2.6":      "31",
 		"Visual C 2019":       "63",
@@ -228,7 +234,7 @@ func Submit(judge_id string, accountName string, submission repository.Submissio
 	r := url.Values{
 		"action":     {"submit"},
 		"SpaceID":    {"1"},
-		"JudgeID":    {judge_id},
+		"JudgeID":    {judgeId},
 		"Language":   {val},
 		"ProblemNum": {submission.TaskID},
 		"Source":     {string(submission.Code)},
@@ -408,7 +414,7 @@ func (t *Timus) Checker(wg *sync.WaitGroup, ch chan<- repository.Submission) {
 						submission.ExecutionTime = executionTime
 						submission.MemoryUsed = memoryUsed
 
-						if end_checing(verdict) {
+						if endChecking(verdict) {
 							submission.Status = 2
 						}
 
@@ -453,7 +459,7 @@ func GetTaskList(count int) ([]Task, error) {
 	return tasks, nil
 }
 
-func end_checing(verdict string) bool {
+func endChecking(verdict string) bool {
 	if verdict == "Compilation error" || verdict == "Wrong answer" || verdict == "Accepted" ||
 		verdict == "Time limit exceeded" || verdict == "Memory limit exceeded" || verdict == "Runtime error (non-zero exit code)" ||
 		verdict == "Runtime error" {
