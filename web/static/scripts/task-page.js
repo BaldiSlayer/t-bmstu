@@ -1,27 +1,11 @@
-function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const content = document.getElementById('content');
-    sidebar.classList.toggle('collapsed');
-    content.classList.toggle('collapsed');
-}
-
-function toggleTheme() {
-    const themeToggle = document.getElementById('theme-toggle');
-    const moonIcon = themeToggle.querySelector('.bi-moon-fill');
-    const sunIcon = themeToggle.querySelector('.bi-sun-fill');
-    const sidebarLabel = themeToggle.querySelector('.sidebar-label');
-
-
-    if (sunIcon.classList.contains('d-none')) {
-        moonIcon.classList.add('d-none');
-        sunIcon.classList.remove('d-none');
-        sidebarLabel.innerText = "День";
-    } else {
-        sunIcon.classList.add('d-none');
-        moonIcon.classList.remove('d-none');
-        sidebarLabel.innerText = "Ночь";
-    }
-}
+// Инициализация CodeMirror для элемента с id="Code"
+var codeTextArea = document.getElementById("Code");
+var codeMirrorEditor = CodeMirror.fromTextArea(codeTextArea, {
+    mode: "text/plain", // Установите нужный режим синтаксиса
+    lineNumbers: true, // Показывать номера строк
+    theme: "default" // Установите нужную тему
+});
+codeMirrorEditor.setSize(null, 500);
 
 function updateTable(data) {
     const table = document.querySelector(".table tbody");
@@ -73,7 +57,6 @@ if (contestIndex !== -1 && problemIndex !== -1) {
 }
 
 const socket = new WebSocket(`ws://${host}/api/ws/contest/${contestId}/problem/${problemId}`);
-
 
 socket.onmessage = function(event) {
     const message = JSON.parse(event.data);
@@ -146,3 +129,28 @@ function sendRequest() {
             console.error('Error:', error);
         });
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const copyIcons = document.querySelectorAll('.copy-icon');
+    copyIcons.forEach(icon => {
+        icon.addEventListener('click', function() {
+            const parentTestBox = this.closest('.test-box');
+            const textToCopyElement = parentTestBox.querySelector('.test-input, .test-output');
+            const textToCopy = textToCopyElement.innerHTML.replace(/<br\s*[\/]?>/gi, '\n'); // Replace <br> tags with newline characters
+            const textarea = document.createElement('textarea');
+            textarea.value = textToCopy;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+
+            // Show Toastify notification
+            Toastify({
+                text: 'Text copied to clipboard',
+                duration: 2000, // Notification will disappear after 2 seconds
+                gravity: 'bottom', // Position the notification at the bottom
+                position: 'right' // Position the notification on the right side
+            }).showToast();
+        });
+    });
+});

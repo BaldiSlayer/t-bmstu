@@ -6,7 +6,8 @@
     <title>{{.Task.Name}}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="/styles/task-page.css?hash=aasasdkkfjk" rel="stylesheet">
+    <link href="/styles/task-page.css?hash=v.1" rel="stylesheet">
+    <link href="/styles/base.css?hash=v8668" rel="stylesheet">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
@@ -19,21 +20,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/go/go.min.js"></script> <!-- Режим для Go -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/pascal/pascal.min.js"></script> <!-- Режим для Pascal -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/clike/clike.min.js"></script> <!-- Режим для Kotlin -->
-
-
-    <style>
-        @media (max-width: 767px) {
-            #sidebar {
-                display: none;
-            }
-
-            #content.collapsed {
-                width: calc(100vw - 5% - 5%);
-                margin-left: 5%;
-            }
-
-        }
-    </style>
 </head>
 
 <body>
@@ -44,7 +30,7 @@
             </a>
         </div>
     
-        <div class="d-flex" style="width: 100vw">
+        <div id="main" class="mb-4">
             <nav id="sidebar" class="collapsed">
                 <a class="d-flex align-items-center link-dark text-decoration-none" onclick="toggleSidebar()">
                     <i class="bi bi-list icons"></i>
@@ -114,7 +100,7 @@
 
                 <div class="test-examples">
                     {{range $index, $test := .Tests}}
-                    <h6 style="font-weight: bold;">Пример {{inc $index}}</h6>
+                    <h6 class="example_h6">Пример {{inc $index}}</h6>
                     <div class="test-container">
                         <div class="test-box">
                             <div class="test-input">{{nl2br $test.Input}}</div>
@@ -133,8 +119,6 @@
                     <h3 class="blue-text"> Источник задачи </h3>
                     {{nl2br .Task.Source}}
                 {{end}}
-
-
 
                 <!-- Посылки !-->
                 <div class="mt-5">
@@ -155,7 +139,9 @@
 
 
 
-                    <button type="submit" class="btn btn-primary mt-2" onclick="sendRequest()">Submit</button>
+                    <button type="submit" class="btn btn-primary mt-2 mb-2" onclick="sendRequest()">Submit</button>
+
+                    {{if .Submissions}}
                     <div class="mt-5">
                         <h1>Посылки</h1>
                         <div class="table-responsive" style="overflow-x: auto;">
@@ -191,65 +177,20 @@
                                     <td>{{.MemoryUsed}}</td>
                                 </tr>
                                 {{end}}
-
                                 </tbody>
                             </table>
                         </div>
                     </div>
-
+                    {{end}}
                 </div>
-
             </div>        
         </div>
 
     </div>
 
-    <script>
-        // Инициализация CodeMirror для элемента с id="Code"
-        var codeTextArea = document.getElementById("Code");
-        var codeMirrorEditor = CodeMirror.fromTextArea(codeTextArea, {
-            mode: "text/plain", // Установите нужный режим синтаксиса
-            lineNumbers: true, // Показывать номера строк
-            theme: "default" // Установите нужную тему
-        });
-        codeMirrorEditor.setSize(null, 500);
-
-
-    </script>
-    <script>
-        // JavaScript to handle copying the text content
-        document.addEventListener('DOMContentLoaded', function() {
-            const copyIcons = document.querySelectorAll('.copy-icon');
-            copyIcons.forEach(icon => {
-                icon.addEventListener('click', function() {
-                    const parentTestBox = this.closest('.test-box');
-                    const textToCopyElement = parentTestBox.querySelector('.test-input, .test-output');
-                    const textToCopy = textToCopyElement.innerHTML.replace(/<br\s*[\/]?>/gi, '\n'); // Replace <br> tags with newline characters
-                    const textarea = document.createElement('textarea');
-                    textarea.value = textToCopy;
-                    document.body.appendChild(textarea);
-                    textarea.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(textarea);
-
-                    // Show Toastify notification
-                    Toastify({
-                        text: 'Text copied to clipboard',
-                        duration: 2000, // Notification will disappear after 2 seconds
-                        gravity: 'bottom', // Position the notification at the bottom
-                        position: 'right' // Position the notification on the right side
-                    }).showToast();
-                });
-            });
-        });
-    </script>
-
-
-
-
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/scripts/task-page.js?hash=8s432f3b"></script>
+    <script src="/scripts/task-page.js?hash=8s03b"></script>
+    <script src="/scripts/base.js?hash=12"></script>
 </body>
 
 </html>

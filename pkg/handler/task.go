@@ -1,11 +1,9 @@
 package handler
 
 import (
-	"encoding/json"
 	"github.com/Baldislayer/t-bmstu/pkg/repository"
 	"github.com/Baldislayer/t-bmstu/pkg/testsystems/timus"
 	"github.com/gin-gonic/gin"
-	"html/template"
 	"net/http"
 	"strconv"
 )
@@ -32,54 +30,6 @@ func (h *Handler) timusTaskList(c *gin.Context) {
 
 	c.HTML(http.StatusOK, "ts_tasks_list.tmpl", gin.H{
 		"Tasks": taskList,
-	})
-}
-
-func (h *Handler) getTask(c *gin.Context) {
-	taskId := c.Param("id")
-	taskInfo, err := TaskInfoById(taskId)
-
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	taskParts, err := GetTaskParts(taskId, &taskInfo)
-
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	submissons, err := repository.GetVerditctsOfContestTask(c.GetString("username"), -1, -1)
-
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	type Test struct {
-		Input  string `json:"input"`
-		Output string `json:"output"`
-	}
-
-	var tests []Test
-	if testStr, ok := taskParts.Tests["tests"].(string); ok {
-		err := json.Unmarshal([]byte(testStr), &tests)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-	}
-
-	c.HTML(http.StatusOK, "task-page.tmpl", gin.H{
-		"Task":        taskParts,
-		"Condition":   template.HTML(taskParts.Condition),
-		"InputData":   template.HTML(taskParts.InputData),
-		"OutputData":  template.HTML(taskParts.OutputData),
-		"Tests":       tests,
-		"Languages":   taskInfo.onlineJudge.GetLanguages(),
-		"Submissions": submissons,
 	})
 }
 

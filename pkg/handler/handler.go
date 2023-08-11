@@ -62,23 +62,20 @@ func (h *Handler) InitRoutes() *gin.Engine {
 			forum.GET("/")
 		}
 
-		// view.GET("/websockets", h.Htmlsome)
 		view.GET("/home", h.home)
 		view.GET("/timus", h.timusTaskList)
 
 		problem := view.Group("/problem")
 		{
 			problem.GET("/:id", h.getTask)
+			// TODO submitTask == submitContestTask
 			problem.POST("/:id/submit", h.submitTask)
 		}
-
-		// view.GET("/contests", h.getContests)
 
 		contest := view.Group("/contest/:contest_id")
 		{
 			contest.GET("/problems", h.getContestTasks)
-			// TODO сделать одинаковую функцию getTask
-			contest.GET("/problem/:problem_id", h.getContestTask)
+			contest.GET("/problem/:problem_id", h.getTask)
 			contest.POST("/problem/:problem_id/submit", h.submitContestTask)
 		}
 
