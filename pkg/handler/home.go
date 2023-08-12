@@ -7,8 +7,7 @@ import (
 	"net/http"
 )
 
-// в домашней странице будут показываться группы в которых пользователь является кем-либо
-func (h *Handler) home(c *gin.Context) {
+func (h *Handler) groups(c *gin.Context) {
 	role := c.GetString("role")
 
 	switch role {

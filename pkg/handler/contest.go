@@ -63,13 +63,13 @@ func (h *Handler) getTask(c *gin.Context) {
 
 	if stringContestId != "" {
 		// получаем все нужное для контеста
-		contestId, err := strconv.Atoi(stringContestId)
+		contestID, err := strconv.Atoi(stringContestId)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		}
 
 		taskId := c.Param("problem_id")
-		contest, err := repository.GetContestInfoById(contestId)
+		contest, err := repository.GetContestInfoById(contestID)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err})
 			return
@@ -86,6 +86,8 @@ func (h *Handler) getTask(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+
+		contestId = contestID
 	} else {
 		value = c.Param("id")
 	}
@@ -111,7 +113,8 @@ func (h *Handler) getTask(c *gin.Context) {
 			}
 		}
 
-		submissions, err := repository.GetVerditctsOfContestTask(c.GetString("username"), contestId, intContestTaskId)
+		parts, err := TaskInfoById(value)
+		submissions := repository.GetVerdicts(c.GetString("username"), parts.id, parts.onlineJudge.GetName(), contestId, intContestTaskId)
 
 		c.HTML(http.StatusOK, "task-page.tmpl", gin.H{
 			"Task":        taskParts,

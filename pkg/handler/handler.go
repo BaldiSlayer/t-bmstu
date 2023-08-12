@@ -55,14 +55,16 @@ func (h *Handler) InitRoutes() *gin.Engine {
 	view := router.Group("/view")
 	view.Use(authMiddleware())
 	{
-		view.GET("/add", h.add)
+		// view.GET("/add", h.add)
+
+		// TODO добавить путь /home, где будут показаны возможности пойти куда-то
+		// view.GET("/home", )
 
 		forum := view.Group("/forum")
 		{
 			forum.GET("/")
 		}
 
-		view.GET("/home", h.home)
 		view.GET("/timus", h.timusTaskList)
 
 		problem := view.Group("/problem")
@@ -79,6 +81,7 @@ func (h *Handler) InitRoutes() *gin.Engine {
 			contest.POST("/problem/:problem_id/submit", h.submitContestTask)
 		}
 
+		view.GET("/groups", h.groups)
 		groups := view.Group("/group")
 		{
 			groups.GET("/invite/:invite_hash", h.checkInvite)

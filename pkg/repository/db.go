@@ -145,7 +145,7 @@ func AddSubmission(submission Submission) (int, error) {
 	return id, nil
 }
 
-func GetVerdicts(username string, taskId string, testingSystem string) []Submission {
+func GetVerdicts(username string, taskId string, testingSystem string, contestId int, contestTaskId int) []Submission {
 	// TODO возвращать еще и ошибку
 	conn, err := pgx.Connect(context.Background(), DbURL)
 	if err != nil {
@@ -156,9 +156,9 @@ func GetVerdicts(username string, taskId string, testingSystem string) []Submiss
 	rows, err := conn.Query(context.Background(), `
         SELECT id, sender_login, task_id, testing_system, code, submission_time, contest_id, contest_task_id, verdict, language, execution_time, memory_used, test, submission_number, status
         FROM submissions
-        WHERE sender_login = $1 AND task_id = $2 AND testing_system = $3
+        WHERE sender_login = $1 AND task_id = $2 AND testing_system = $3 AND contest_id = $4 AND contest_task_id = $5
 		ORDER BY id DESC
-    `, username, taskId, testingSystem)
+    `, username, taskId, testingSystem, contestId, contestTaskId)
 	if err != nil {
 		log.Printf("Failed to query submissions verdicts: %v", err)
 	}

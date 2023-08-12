@@ -3,31 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{.Task.Name}}</title>
+    <title>Группы</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="/styles/base.css?hash=v8668" rel="stylesheet">
-
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-
-
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/clike/clike.min.js"></script> <!-- Режим для C++ -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/python/python.min.js"></script> <!-- Режим для Python -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/go/go.min.js"></script> <!-- Режим для Go -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/pascal/pascal.min.js"></script> <!-- Режим для Pascal -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/clike/clike.min.js"></script> <!-- Режим для Kotlin -->
-
-    <style>
-        .hover-highlight:hover {
-            background-color: rgba(38,131,238, 0.1); /* Синий цвет с пониженной прозрачностью */
-            filter: brightness(0.8);
-            transition: background-color 0.3s ease, filter 0.3s ease; /* Плавные анимации перехода */
-        }
-
-    </style>
+    <link href="/styles/base.css?hash=v866df8" rel="stylesheet">
+    <link href="/styles/group-contests.css?hash=v866df8" rel="stylesheet">
 </head>
 
 <body>
@@ -40,44 +20,43 @@
 
     <div id="main">
         <nav id="sidebar" class="collapsed">
-            <a class="d-flex align-items-center link-dark text-decoration-none" onclick="toggleSidebar()">
-                <i class="bi bi-list icons"></i>
+            <a class="d-flex align-items-center text-decoration-none" onclick="toggleSidebar()">
+                <i class="bi bi-list icons simple-text"></i>
             </a>
 
-            <a class="d-flex align-items-center link-dark text-decoration-none theme-toggle-container" id="theme-toggle" onclick="toggleTheme()">
+            <a class="d-flex align-items-center  text-decoration-none theme-toggle-container" id="theme-toggle" onclick="toggleTheme()">
+                <span class="me-2 icons">
+                    <i class="bi bi-moon-fill simple-text"></i>
+                    <i class="bi bi-sun-fill simple-text d-none"></i>
+                </span>
 
-                    <span class="me-2 icons">
-                        <i class="bi bi-moon-fill"></i>
-                        <i class="bi bi-sun-fill d-none"></i>
-                    </span>
-
-                <span class="sidebar-label">Ночь</span>
+                <span class="sidebar-label simple-text">Ночь</span>
             </a>
 
             <div class="center-vertically">
                 <ul class="list-unstyled">
                     <li class="mb-2">
-                        <a href="/view/home" class="d-flex align-items-center link-dark text-decoration-none">
-                            <span class="me-2 icons"><i class="bi bi-house-door"></i></span>
-                            <span class="sidebar-label">Home</span>
+                        <a href="/view/home" class="d-flex align-items-center text-decoration-none">
+                            <span class="me-2 icons"><i class="bi bi-house-door simple-text"></i></span>
+                            <span class="sidebar-label simple-text">Home</span>
                         </a>
                     </li>
                     <li class="mb-2">
-                        <a href="/view/hw_iu9_bmstu" class="d-flex align-items-center link-dark text-decoration-none">
-                            <span class="me-2 icons"><i class="bi bi-code-square"></i></span>
-                            <span class="sidebar-label">hw_iu9_bmstu</span>
+                        <a href="/view/hw_iu9_bmstu" class="d-flex align-items-center text-decoration-none">
+                            <span class="me-2 icons"><i class="bi bi-code-square simple-text"></i></span>
+                            <span class="sidebar-label simple-text">hw_iu9_bmstu</span>
                         </a>
                     </li>
                     <li class="mb-2">
-                        <a href="/view/forum" class="d-flex align-items-center link-dark text-decoration-none">
-                            <span class="me-2 icons"><i class="bi bi-chat-left-dots"></i></span>
-                            <span class="sidebar-label">Форум</span>
+                        <a href="/view/forum" class="d-flex align-items-center text-decoration-none">
+                            <span class="me-2 icons"><i class="bi bi-chat-left-dots simple-text"></i></span>
+                            <span class="sidebar-label simple-text">Форум</span>
                         </a>
                     </li>
                     <li class="mb-2">
-                        <a href="/view/settings" class="d-flex align-items-center link-dark text-decoration-none">
-                            <span class="me-2 icons"><i class="bi bi-gear"></i></span>
-                            <span class="sidebar-label">Настройки</span>
+                        <a href="/view/settings" class="d-flex align-items-center text-decoration-none">
+                            <span class="me-2 icons"><i class="bi bi-gear simple-text"></i></span>
+                            <span class="sidebar-label simple-text">Настройки</span>
                         </a>
                     </li>
                 </ul>
@@ -116,19 +95,9 @@
 
 </div>
 
-<script>
-    function handleDivClick(url) {
-        const target = event.target.tagName.toLowerCase();
-        console.log(target);
-        if (target !== 'a' && target !== 'i' && target !== 'img') {
-            window.location.href = url;
-        }
-    }
-
-</script>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/scripts/base.js?hash=12"></script>
+<script src="/scripts/base.js?hash=1fs2"></script>
+<script src="/scripts/group-contests.js?hash=1fs2"></script>
 </body>
 
 </html>
