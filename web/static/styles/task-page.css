@@ -74,3 +74,16 @@
 .example_h6 {
     font-weight: bold;
 }
+
+.dark-mode .test-input {
+    color: orange;
+}
+
+.dark-mode .dropdown-menu {
+    background-color: #273238;
+    color: white;
+}
+
+.dark-mode .dropdown-item {
+    color: white;
+}

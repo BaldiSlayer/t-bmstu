@@ -3,46 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{.Task.Name}}</title>
+    <title>Группы</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="/styles/base.css?hash=v8668" rel="stylesheet">
-
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-
-
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/clike/clike.min.js"></script> <!-- Режим для C++ -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/python/python.min.js"></script> <!-- Режим для Python -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/go/go.min.js"></script> <!-- Режим для Go -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/pascal/pascal.min.js"></script> <!-- Режим для Pascal -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/clike/clike.min.js"></script> <!-- Режим для Kotlin -->
-
-    <style>
-        .selected {
-            text-decoration: underline;
-            font-weight: bold;
-        }
-
-        .card.task-card {
-            border: none; /* Удаляем все границы */
-            cursor: pointer;
-            border-bottom: 1px solid #ddd; /* Добавляем нижнюю границу */
-            padding-bottom: 10px; /* Добавляем отступ снизу для визуального разделения */
-        }
-
-        .card.task-card:last-child {
-            border-bottom: none; /* Удаляем нижнюю границу у последней карточки */
-            padding-bottom: 0; /* Удаляем отступ снизу для последней карточки */
-        }
-
-        .card.task-card:hover {
-            background-color: #f8f9fa; /* Добавляем стиль для наведения мыши */
-        }
-    </style>
-
+    <link href="/styles/base.css?hash=v866df8" rel="stylesheet">
+    <link href="/styles/tasks-list.css?hash=v866df8" rel="stylesheet">
 </head>
 
 <body>
@@ -53,51 +18,51 @@
         </a>
     </div>
 
-
     <div id="main">
         <nav id="sidebar" class="collapsed">
-            <a class="d-flex align-items-center link-dark text-decoration-none" onclick="toggleSidebar()">
-                <i class="bi bi-list icons"></i>
+            <a class="d-flex align-items-center text-decoration-none" onclick="toggleSidebar()">
+                <i class="bi bi-list icons simple-text"></i>
             </a>
 
-            <a class="d-flex align-items-center link-dark text-decoration-none theme-toggle-container" id="theme-toggle" onclick="toggleTheme()">
-                    <span class="me-2 icons">
-                        <i class="bi bi-moon-fill"></i>
-                        <i class="bi bi-sun-fill d-none"></i>
-                    </span>
+            <a class="d-flex align-items-center  text-decoration-none theme-toggle-container" id="theme-toggle" onclick="toggleTheme()">
+                <span class="me-2 icons">
+                    <i class="bi bi-moon-fill simple-text"></i>
+                    <i class="bi bi-sun-fill simple-text d-none"></i>
+                </span>
 
-                <span class="sidebar-label">Ночь</span>
+                <span class="sidebar-label simple-text">Ночь</span>
             </a>
 
             <div class="center-vertically">
                 <ul class="list-unstyled">
                     <li class="mb-2">
-                        <a href="/view/home" class="d-flex align-items-center link-dark text-decoration-none">
-                            <span class="me-2 icons"><i class="bi bi-house-door"></i></span>
-                            <span class="sidebar-label">Home</span>
+                        <a href="/view/home" class="d-flex align-items-center text-decoration-none">
+                            <span class="me-2 icons"><i class="bi bi-house-door simple-text"></i></span>
+                            <span class="sidebar-label simple-text">Home</span>
                         </a>
                     </li>
                     <li class="mb-2">
-                        <a href="/view/hw_iu9_bmstu" class="d-flex align-items-center link-dark text-decoration-none">
-                            <span class="me-2 icons"><i class="bi bi-code-square"></i></span>
-                            <span class="sidebar-label">hw_iu9_bmstu</span>
+                        <a href="/view/hw_iu9_bmstu" class="d-flex align-items-center text-decoration-none">
+                            <span class="me-2 icons"><i class="bi bi-code-square simple-text"></i></span>
+                            <span class="sidebar-label simple-text">hw_iu9_bmstu</span>
                         </a>
                     </li>
                     <li class="mb-2">
-                        <a href="/view/forum" class="d-flex align-items-center link-dark text-decoration-none">
-                            <span class="me-2 icons"><i class="bi bi-chat-left-dots"></i></span>
-                            <span class="sidebar-label">Форум</span>
+                        <a href="/view/forum" class="d-flex align-items-center text-decoration-none">
+                            <span class="me-2 icons"><i class="bi bi-chat-left-dots simple-text"></i></span>
+                            <span class="sidebar-label simple-text">Форум</span>
                         </a>
                     </li>
                     <li class="mb-2">
-                        <a href="/view/settings" class="d-flex align-items-center link-dark text-decoration-none">
-                            <span class="me-2 icons"><i class="bi bi-gear"></i></span>
-                            <span class="sidebar-label">Настройки</span>
+                        <a href="/view/settings" class="d-flex align-items-center text-decoration-none">
+                            <span class="me-2 icons"><i class="bi bi-gear simple-text"></i></span>
+                            <span class="sidebar-label simple-text">Настройки</span>
                         </a>
                     </li>
                 </ul>
             </div>
         </nav>
+
 
         <div id="content" class="collapsed">
             <div class="mt-2" style="width: 100%; border-bottom: 2px solid #eaeaea; text-align: center; padding: 10px 0;">
@@ -106,49 +71,27 @@
                 <h4 class="blue-text" style="display: inline-block; font-weight: bold; margin: 0 10px; cursor: pointer;">Результаты</h4>
             </div>
 
-            <div class="">
-                <div id="task-list" class="mb-2">
+            <div>
+                <div id="task-list">
                     {{ $taskNumber := 1 }}
                     {{ range .Tasks }}
-                    <div class="card task-card" onclick="redirectToTask('{{.ID}}');">
-                        <div class="card-body">
-                            <h4 class="card-title blue-text" style="font-weight: bold">{{ $taskNumber }}. {{.Name}}</h4>
-                        </div>
+                    <div class="task-card" onclick="redirectToTask('{{.ID}}');">
+                        <h3 class="card-title blue-text" style="font-weight: bold">{{ $taskNumber }}. {{.Name}}</h3>
                     </div>
+
                     {{ $taskNumber = inc $taskNumber }}
                     {{ end }}
                 </div>
             </div>
-
-
         </div>
     </div>
 
 </div>
 
-<script>
-    function redirectToTask(taskId) {
-        // Получаем текущий URL
-        var currentURL = window.location.href;
-
-        // Ищем индекс "contest/" в URL
-        var contestIndex = currentURL.indexOf("contest/");
-
-        // Ищем индекс следующего "/" после "contest/"
-        var slashIndex = currentURL.indexOf("/", contestIndex + 8);
-
-        // Извлекаем значение contest_id из URL
-        var contestId = currentURL.substring(contestIndex + 8, slashIndex);
-
-        // Формируем новый URL с использованием contest_id и taskId
-        var newURL = "/view/contest/" + contestId + "/problem/" + taskId;
-
-        // Переходим на новый URL
-        window.location.href = newURL;
-    }
-</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/scripts/base.js?hash=1asd2"></script>
+<script src="/scripts/base.js?hash=1fs2"></script>
+<script src="/scripts/tasks-list.js?hash=1fs2"></script>
+
 </body>
 
 </html>

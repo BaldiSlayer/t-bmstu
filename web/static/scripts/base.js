@@ -11,18 +11,25 @@ function toggleSidebar() {
 }
 
 function toggleTheme() {
-
     body.classList.toggle('dark-mode');
     if (sunIcon.classList.contains('d-none')) {
         moonIcon.classList.add('d-none');
         sunIcon.classList.remove('d-none');
         sidebarLabel.innerText = "День";
 
+        if (document.getElementById("Code") !== null) {
+            codeMirrorEditor.setOption("theme", "material");
+        }
+
         localStorage.setItem('theme', 'dark');
     } else {
         sunIcon.classList.add('d-none');
         moonIcon.classList.remove('d-none');
         sidebarLabel.innerText = "Ночь";
+
+        if (document.getElementById("Code") !== null) {
+            codeMirrorEditor.setOption("theme", "default");
+        }
 
         localStorage.setItem('theme', 'light');
     }

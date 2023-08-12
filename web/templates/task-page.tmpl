@@ -6,190 +6,237 @@
     <title>{{.Task.Name}}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="/styles/task-page.css?hash=v.1" rel="stylesheet">
-    <link href="/styles/base.css?hash=v8668" rel="stylesheet">
+    <link href="/styles/base.css?hash=v866df8" rel="stylesheet">
+    <link href="/styles/task-page.css?hash=v866ddf8" rel="stylesheet">
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/theme/material.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/clike/clike.min.js"></script> <!-- Режим для C++ -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/python/python.min.js"></script> <!-- Режим для Python -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/go/go.min.js"></script> <!-- Режим для Go -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/pascal/pascal.min.js"></script> <!-- Режим для Pascal -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.62.0/mode/clike/clike.min.js"></script> <!-- Режим для Kotlin -->
+
+    <style>
+        .dark-mode .test-box {
+            background-color: #36474f;
+            border: 2px solid #475965;
+        }
+
+        .dark-mode .coding-area {
+            border: 2px solid #475965;
+        }
+
+        .dark-mode .table-colors {
+            background-color: #343a40 !important;
+            color: #ffffff !important;
+        }
+
+
+        body.dark-mode .table th,
+        body.dark-mode .table td {
+            border-color: #454d55; /* Цвет границ ячеек в темной теме */
+        }
+
+        /* Применяем стили для разных значений в столбце Вердикт */
+        body.dark-mode .table .badge-success {
+            background-color: #28a745; /* Цвет фона для статуса "Accepted" */
+        }
+
+        body.dark-mode .table .badge-warning {
+            background-color: #ffc107; /* Цвет фона для статуса "Waiting" */
+        }
+
+        body.dark-mode .table .badge-info {
+            background-color: #17a2b8; /* Цвет фона для статуса "Compiling" */
+        }
+
+        body.dark-mode .table .badge-danger {
+            background-color: #dc3545; /* Цвет фона для статусов отличных от "Accepted", "Waiting", "Compiling" */
+        }
+    </style>
 </head>
 
 <body>
-    <div>
-        <div class="avatar-container">
-            <a href="/view/profile">
-                <img src="https://avatars.githubusercontent.com/u/77489413?v=4" alt="User Avatar" class="user-avatar">
-            </a>
-        </div>
-    
-        <div id="main" class="mb-4">
-            <nav id="sidebar" class="collapsed">
-                <a class="d-flex align-items-center link-dark text-decoration-none" onclick="toggleSidebar()">
-                    <i class="bi bi-list icons"></i>
-                </a>   
-    
-                <a class="d-flex align-items-center link-dark text-decoration-none theme-toggle-container" id="theme-toggle" onclick="toggleTheme()">
-                    
-                    <span class="me-2 icons">
-                        <i class="bi bi-moon-fill"></i>
-                        <i class="bi bi-sun-fill d-none"></i>
-                    </span>
-                    
-                    <span class="sidebar-label">Ночь</span>
-                </a>   
-            
-                <div class="center-vertically">
-                    <ul class="list-unstyled">
-                        <li class="mb-2">
-                            <a href="/view/home" class="d-flex align-items-center link-dark text-decoration-none">
-                                <span class="me-2 icons"><i class="bi bi-house-door"></i></span>
-                                <span class="sidebar-label">Home</span>
-                            </a>
-                        </li>
-                        <li class="mb-2">
-                            <a href="/view/hw_iu9_bmstu" class="d-flex align-items-center link-dark text-decoration-none">
-                                <span class="me-2 icons"><i class="bi bi-code-square"></i></span>
-                                <span class="sidebar-label">hw_iu9_bmstu</span>
-                            </a>
-                        </li>
-                        <li class="mb-2">
-                            <a href="/view/forum" class="d-flex align-items-center link-dark text-decoration-none">
-                                <span class="me-2 icons"><i class="bi bi-chat-left-dots"></i></span>
-                                <span class="sidebar-label">Форум</span>
-                            </a>
-                        </li>
-                        <li class="mb-2">
-                            <a href="/view/settings" class="d-flex align-items-center link-dark text-decoration-none">
-                                <span class="me-2 icons"><i class="bi bi-gear"></i></span>
-                                <span class="sidebar-label">Настройки</span>
-                            </a>
-                        </li>
-                    </ul>
-                </div>                         
-            </nav>
-
-    
-            <div id="content" class="collapsed">
-                <div class="center-container">
-                    <div class="rounded-box">
-                        <h1 class="blue-text text-center">{{.Task.Name}}</h1>
-                    </div>
-
-                    <div class="problem_limits">
-                        <!-- TODO вставить ограничения -->
-                    </div>
-                </div>
-
-                {{.Condition}}
-        
-                <h3 class="blue-text"> Формат ввода </h3>
-                {{.InputData}}
-
-                <h3 class="blue-text"> Формат вывода </h3>
-                {{.OutputData}}
-
-                <h3 class="blue-text"> Примеры тестов </h3>
-
-                <div class="test-examples">
-                    {{range $index, $test := .Tests}}
-                    <h6 class="example_h6">Пример {{inc $index}}</h6>
-                    <div class="test-container">
-                        <div class="test-box">
-                            <div class="test-input">{{nl2br $test.Input}}</div>
-                            <div class="copy-icon">📋</div>
-                        </div>
-                        <div class="test-box">
-                            <div class="test-output">{{nl2br $test.Output}}</div>
-                            <div class="copy-icon">📋</div>
-                        </div>
-                    </div>
-                    {{end}}
-                </div>
-
-
-                {{if .Task.Source}}
-                    <h3 class="blue-text"> Источник задачи </h3>
-                    {{nl2br .Task.Source}}
-                {{end}}
-
-                <!-- Посылки !-->
-                <div class="mt-5">
-                        <div class="dropdown mt-4" style="margin-bottom: 2rem;">
-                            <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                Select an language
-                            </button>
-                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                {{range .Languages}}
-                                <li><a class="dropdown-item" onclick="selectItem('{{.}}')">{{.}}</a></li>
-                                {{end}}
-                            </ul>
-                        </div>
-
-                        <div class="coding-area">
-                            <textarea id="Code" rows="10" placeholder="Enter code"></textarea>
-                        </div>
-
-
-
-                    <button type="submit" class="btn btn-primary mt-2 mb-2" onclick="sendRequest()">Submit</button>
-
-
-                    <div class="mt-5">
-                        <h1>Посылки</h1>
-                        <div class="table-responsive" style="overflow-x: auto;">
-                            <table class="table table-striped">
-                                <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Компилятор</th>
-                                    <th>Вердикт</th>
-                                    <th>Тест</th>
-                                    <th>Время</th>
-                                    <th>Память</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {{range .Submissions}}
-                                <tr data-id="{{.ID}}">
-                                    <td>{{.ID}}</td>
-                                    <td>{{.Language}}</td>
-                                    <td>
-                                        {{if eq .Verdict "Accepted"}}
-                                        <span class="badge badge-success">{{.Verdict}}</span>
-                                        {{else if eq .Verdict "Waiting"}}
-                                        <span class="badge badge-warning">{{.Verdict}}</span>
-                                        {{else if eq .Verdict "Compiling"}}
-                                        <span class="badge badge-info">{{.Verdict}}</span>
-                                        {{else}}
-                                        <span class="badge badge-danger">{{.Verdict}}</span>
-                                        {{end}}
-                                    </td>
-                                    <td>{{.Test}}</td>
-                                    <td>{{.ExecutionTime}}</td>
-                                    <td>{{.MemoryUsed}}</td>
-                                </tr>
-                                {{end}}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>        
-        </div>
-
+<div>
+    <div class="avatar-container">
+        <a href="/view/profile">
+            <img src="https://avatars.githubusercontent.com/u/77489413?v=4" alt="User Avatar" class="user-avatar">
+        </a>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/scripts/task-page.js?hash=8s03b"></script>
-    <script src="/scripts/base.js?hash=12"></script>
+    <div id="main">
+        <nav id="sidebar" class="collapsed">
+            <a class="d-flex align-items-center text-decoration-none" onclick="toggleSidebar()">
+                <i class="bi bi-list icons simple-text"></i>
+            </a>
+
+            <a class="d-flex align-items-center  text-decoration-none theme-toggle-container" id="theme-toggle" onclick="toggleTheme()">
+                <span class="me-2 icons">
+                    <i class="bi bi-moon-fill simple-text"></i>
+                    <i class="bi bi-sun-fill simple-text d-none"></i>
+                </span>
+
+                <span class="sidebar-label simple-text">Ночь</span>
+            </a>
+
+            <div class="center-vertically">
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <a href="/view/home" class="d-flex align-items-center text-decoration-none">
+                            <span class="me-2 icons"><i class="bi bi-house-door simple-text"></i></span>
+                            <span class="sidebar-label simple-text">Home</span>
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="/view/hw_iu9_bmstu" class="d-flex align-items-center text-decoration-none">
+                            <span class="me-2 icons"><i class="bi bi-code-square simple-text"></i></span>
+                            <span class="sidebar-label simple-text">hw_iu9_bmstu</span>
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="/view/forum" class="d-flex align-items-center text-decoration-none">
+                            <span class="me-2 icons"><i class="bi bi-chat-left-dots simple-text"></i></span>
+                            <span class="sidebar-label simple-text">Форум</span>
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="/view/settings" class="d-flex align-items-center text-decoration-none">
+                            <span class="me-2 icons"><i class="bi bi-gear simple-text"></i></span>
+                            <span class="sidebar-label simple-text">Настройки</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+
+        <div id="content" class="collapsed">
+            <div class="center-container">
+                <div class="rounded-box">
+                    <h1 class="blue-text text-center">{{.Task.Name}}</h1>
+                </div>
+
+                <div class="problem_limits">
+                    <!-- TODO вставить ограничения -->
+                </div>
+            </div>
+
+
+            <div class="simple-text">
+                {{.Condition}}
+            </div>
+
+            <h3 class="blue-text mt-2"> Формат ввода </h3>
+            <div class="simple-text">
+                {{.InputData}}
+            </div>
+
+
+            <h3 class="blue-text mt-2"> Формат вывода </h3>
+            <div class="simple-text">
+                {{.OutputData}}
+            </div>
+
+            <h3 class="blue-text mt-2"> Примеры тестов </h3>
+
+            <div class="test-examples">
+                {{range $index, $test := .Tests}}
+                <h6 class="example_h6 simple-text">Пример {{inc $index}}</h6>
+                <div class="test-container">
+                    <div class="test-box">
+                        <div class="test-input">{{nl2br $test.Input}}</div>
+                        <div class="copy-icon">📋</div>
+                    </div>
+                    <div class="test-box">
+                        <div class="test-output">{{nl2br $test.Output}}</div>
+                        <div class="copy-icon">📋</div>
+                    </div>
+                </div>
+                {{end}}
+            </div>
+
+
+            {{if .Task.Source}}
+                <h3 class="blue-text mt-2"> Источник задачи </h3>
+                <div class="simple-text">
+                    {{nl2br .Task.Source}}
+                </div>
+            {{end}}
+
+            <!-- Посылки !-->
+            <div class="mt-5">
+                <div class="dropdown mt-4" style="margin-bottom: 2rem;">
+                    <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Select an language
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                        {{range .Languages}}
+                        <li><a class="dropdown-item" onclick="selectItem('{{.}}')">{{.}}</a></li>
+                        {{end}}
+                    </ul>
+                </div>
+
+                <div class="coding-area">
+                    <textarea id="Code" rows="10" placeholder="Enter code"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary mt-2 mb-2" onclick="sendRequest()">Submit</button>
+
+                <div class="mt-3">
+                    <h1 class="blue-text">Посылки</h1>
+                    <div class="table-responsive" style="overflow-x: auto;">
+                        <table class="table table-stripped table-colors">
+                            <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Компилятор</th>
+                                <th>Вердикт</th>
+                                <th>Тест</th>
+                                <th>Время</th>
+                                <th>Память</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {{range .Submissions}}
+                            <tr data-id="{{.ID}}">
+                                <td>{{.ID}}</td>
+                                <td>{{.Language}}</td>
+                                <td>
+                                    {{if eq .Verdict "Accepted"}}
+                                    <span class="badge badge-success">{{.Verdict}}</span>
+                                    {{else if eq .Verdict "Waiting"}}
+                                    <span class="badge badge-warning">{{.Verdict}}</span>
+                                    {{else if eq .Verdict "Compiling"}}
+                                    <span class="badge badge-info">{{.Verdict}}</span>
+                                    {{else}}
+                                    <span class="badge badge-danger">{{.Verdict}}</span>
+                                    {{end}}
+                                </td>
+                                <td>{{.Test}}</td>
+                                <td>{{.ExecutionTime}}</td>
+                                <td>{{.MemoryUsed}}</td>
+                            </tr>
+                            {{end}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/scripts/base.js?hash=dassadsssss2"></script>
+<script src="/scripts/task-page.js?hash=adsdasasdaddddsads2"></script>
+
 </body>
 
 </html>

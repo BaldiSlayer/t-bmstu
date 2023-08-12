@@ -1,9 +1,15 @@
+codingTheme = "default";
+
+if (body.classList.contains("dark-mode")) {
+    codingTheme = "material";
+}
+
 // Инициализация CodeMirror для элемента с id="Code"
-var codeTextArea = document.getElementById("Code");
-var codeMirrorEditor = CodeMirror.fromTextArea(codeTextArea, {
-    mode: "text/plain", // Установите нужный режим синтаксиса
-    lineNumbers: true, // Показывать номера строк
-    theme: "default" // Установите нужную тему
+const codeTextArea = document.getElementById("Code");
+const codeMirrorEditor = CodeMirror.fromTextArea(codeTextArea, {
+    mode: "text/plain",
+    lineNumbers: true,
+    theme: codingTheme,
 });
 codeMirrorEditor.setSize(null, 500);
 
