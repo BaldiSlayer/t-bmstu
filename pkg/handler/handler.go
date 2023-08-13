@@ -11,21 +11,14 @@ type Handler struct {
 
 func (h *Handler) InitRoutes() *gin.Engine {
 	router := gin.New()
-	/*
-		store := cookie.NewStore([]byte(viper.GetString("SessionSecret")))
-		store.Options(sessions.Options{
-			Path:     "/", // Установка пути для куки на "/"
-			MaxAge:   86400,
-			HttpOnly: true,
-			// TODO add Secure and other need able options
-		})
-		router.Use(sessions.Sessions(sessionName, store))
-	*/
 
 	router.SetFuncMap(template.FuncMap{
 		"nl2br": nl2br,
 		"inc": func(index int) int {
 			return index + 1
+		},
+		"odd": func(index int) bool {
+			return index%2 == 0
 		},
 	})
 	router.LoadHTMLGlob("web/templates/*")
@@ -91,7 +84,6 @@ func (h *Handler) InitRoutes() *gin.Engine {
 				groupContest := group.Group("/contest/:contest_id")
 				{
 					groupContest.GET("/tasks", h.getContestTasks)
-					// TODO вести дальше до задач
 				}
 			}
 		}

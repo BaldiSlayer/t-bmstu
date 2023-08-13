@@ -3,7 +3,7 @@ package websockets
 import (
 	"encoding/base64"
 	"encoding/json"
-	"github.com/Baldislayer/t-bmstu/pkg/repository"
+	"github.com/Baldislayer/t-bmstu/pkg/database"
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
@@ -28,7 +28,7 @@ var Connections = make(map[string][]UserConnections) // Мапа для хран
 var Mu sync.Mutex                                    // Мьютекс для безопасного доступа к мапе Connections
 
 // Функция для отправки объекта Submission по веб-сокету по нику и странице
-func SendMessageToUser(username string, submissionFull repository.Submission) {
+func SendMessageToUser(username string, submissionFull database.Submission) {
 	Mu.Lock()
 	userConns, ok := Connections[username]
 	Mu.Unlock()

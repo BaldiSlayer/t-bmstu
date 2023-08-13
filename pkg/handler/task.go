@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"github.com/Baldislayer/t-bmstu/pkg/repository"
 	"github.com/Baldislayer/t-bmstu/pkg/testsystems/timus"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -13,11 +12,9 @@ func (h *Handler) timusTaskList(c *gin.Context) {
 
 	parsedCount, err := strconv.Atoi(count)
 	if err != nil {
-		// TODO
 		parsedCount = 15
 	}
 
-	// TODO
 	if parsedCount > 50 {
 		parsedCount = 50
 	}
@@ -59,17 +56,5 @@ func (h *Handler) submitTask(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Task submitted successfully",
-	})
-}
-
-// TODO вынести в какой-то другой файл / убрать это по причине "все контесты" лежат в какой-то группе
-func (h *Handler) getContests(c *gin.Context) {
-	// пока что я буду отображать все контесты
-	// сделать отображение только тех, в которые он может зайти
-
-	contests := repository.GetContests()
-
-	c.HTML(http.StatusOK, "contests.tmpl", gin.H{
-		"Contests": contests,
 	})
 }

@@ -3,7 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Baldislayer/t-bmstu/pkg/repository"
+	"github.com/Baldislayer/t-bmstu/pkg/database"
 	"github.com/gin-gonic/gin"
 	"html/template"
 	"net/http"
@@ -28,7 +28,7 @@ func (h *Handler) getContestTasks(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 
-	contest, err := repository.GetContestInfoById(contestId)
+	contest, err := database.GetContestInfoById(contestId)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 		return
@@ -69,7 +69,7 @@ func (h *Handler) getTask(c *gin.Context) {
 		}
 
 		taskId := c.Param("problem_id")
-		contest, err := repository.GetContestInfoById(contestID)
+		contest, err := database.GetContestInfoById(contestID)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err})
 			return
@@ -114,7 +114,7 @@ func (h *Handler) getTask(c *gin.Context) {
 		}
 
 		parts, err := TaskInfoById(value)
-		submissions := repository.GetVerdicts(c.GetString("username"), parts.id, parts.onlineJudge.GetName(), contestId, intContestTaskId)
+		submissions := database.GetVerdicts(c.GetString("username"), parts.id, parts.onlineJudge.GetName(), contestId, intContestTaskId)
 
 		c.HTML(http.StatusOK, "task-page.tmpl", gin.H{
 			"Task":        taskParts,
@@ -158,7 +158,7 @@ func (h *Handler) submitContestTask(c *gin.Context) {
 		return
 	}
 
-	contest, err := repository.GetContestInfoById(contestId)
+	contest, err := database.GetContestInfoById(contestId)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 		return

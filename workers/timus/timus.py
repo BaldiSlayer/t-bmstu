@@ -188,7 +188,7 @@ def submitter():
             break
 
     session.close()
-    # TODO смотреть, освободится ли хотя бы одна штука через 0.5 секунды
+
     threading.Timer(0.5, submitter).start()
 
 

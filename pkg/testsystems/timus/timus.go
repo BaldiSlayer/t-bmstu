@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/Baldislayer/t-bmstu/pkg/repository"
+	"github.com/Baldislayer/t-bmstu/pkg/database"
 	"github.com/PuerkitoBio/goquery"
 	"io/ioutil"
 	"log"
@@ -134,7 +134,7 @@ func (t *Timus) GetLanguages() []string {
 	}
 }
 
-func (t *Timus) GetProblem(taskID string) (repository.Task, error) {
+func (t *Timus) GetProblem(taskID string) (database.Task, error) {
 	taskUrl := fmt.Sprintf("https://acm.timus.ru/problem.aspx?space=1&locale=ru&num=%s", taskID)
 
 	doc, err := goquery.NewDocument(taskUrl)
@@ -143,10 +143,10 @@ func (t *Timus) GetProblem(taskID string) (repository.Task, error) {
 	}
 
 	if doc.Find("div.problem_content").Length() == 0 {
-		return repository.Task{}, err
+		return database.Task{}, err
 	}
 
-	task := repository.Task{}
+	task := database.Task{}
 
 	problemContent := doc.Find("div.problem_content")
 
@@ -201,7 +201,7 @@ func (t *Timus) GetProblem(taskID string) (repository.Task, error) {
 }
 
 // Submit - функция, которая отправляет посылку
-func Submit(judgeId string, accountName string, submission repository.Submission) (string, error) {
+func Submit(judgeId string, accountName string, submission database.Submission) (string, error) {
 	d := map[string]string{
 		"FreePascal 2.6":      "31",
 		"Visual C 2019":       "63",
@@ -286,7 +286,7 @@ func Submit(judgeId string, accountName string, submission repository.Submission
 	return foundedId, nil
 }
 
-func (t *Timus) Submitter(wg *sync.WaitGroup, ch chan<- repository.Submission) {
+func (t *Timus) Submitter(wg *sync.WaitGroup, ch chan<- database.Submission) {
 	defer wg.Done()
 
 	type Account struct {
@@ -310,7 +310,7 @@ func (t *Timus) Submitter(wg *sync.WaitGroup, ch chan<- repository.Submission) {
 	}
 
 	for {
-		submissions, err := repository.GetSubmitsWithStatus(t.GetName(), 0)
+		submissions, err := database.GetSubmitsWithStatus(t.GetName(), 0)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -348,18 +348,18 @@ func constructURL(id string, count int) string {
 	return fmt.Sprintf("https://acm.timus.ru/status.aspx?space=1&count=%d&from=%s", count, id)
 }
 
-func (t *Timus) Checker(wg *sync.WaitGroup, ch chan<- repository.Submission) {
+func (t *Timus) Checker(wg *sync.WaitGroup, ch chan<- database.Submission) {
 	defer wg.Done()
 
 	for {
 		// получение отправленных, но еще не прошедших проверку посылок
-		submissions, err := repository.GetSubmitsWithStatus(t.GetName(), 1)
+		submissions, err := database.GetSubmitsWithStatus(t.GetName(), 1)
 
 		if err != nil {
 			fmt.Println(err)
 		}
 
-		submissionsDict := make(map[string]repository.Submission)
+		submissionsDict := make(map[string]database.Submission)
 		submissionsIDs := make([]string, 0)
 
 		for _, submission := range submissions {
