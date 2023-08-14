@@ -48,10 +48,7 @@ func (h *Handler) InitRoutes() *gin.Engine {
 	view := router.Group("/view")
 	view.Use(authMiddleware())
 	{
-		// view.GET("/add", h.add)
-
-		// TODO добавить путь /home, где будут показаны возможности пойти куда-то
-		// view.GET("/home", )
+		view.GET("/home", h.home)
 
 		forum := view.Group("/forum")
 		{

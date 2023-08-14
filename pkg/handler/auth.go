@@ -205,7 +205,7 @@ func (h *Handler) signUp(c *gin.Context) {
 			}
 
 			if exist {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Такой пользователь существует"})
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Пользователь с таким никнеймом уже есть"})
 				return
 			}
 

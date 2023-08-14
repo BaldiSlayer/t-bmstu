@@ -3,6 +3,7 @@ package testsystems
 import (
 	"fmt"
 	"github.com/Baldislayer/t-bmstu/pkg/database"
+	"github.com/Baldislayer/t-bmstu/pkg/testsystems/acmp"
 	"github.com/Baldislayer/t-bmstu/pkg/testsystems/timus"
 	"github.com/Baldislayer/t-bmstu/pkg/websockets"
 	"sync"
@@ -11,6 +12,7 @@ import (
 // AllowedTestsystems - разрешенные (добавленные) тестирующие системы
 var AllowedTestsystems = []TestSystem{
 	&timus.Timus{Name: "timus"},
+	&acmp.ACMP{Name: "acmp"},
 }
 
 // TestSystem - это интерфейс класса тестирующей системы, то есть все тестирующие системы должны обладать этими функциями
@@ -21,11 +23,12 @@ type TestSystem interface {
 	CheckLanguage(language string) bool
 	// GetLanguages - получить языки на которых можно сдавать в этой тестирующей системе
 	GetLanguages() []string
-	// Submitter - воркер, который занимается отправлением решений, и будет запускаться в отдельной горутине
+	// Submitter - воркер, который занимается отправлением посылок, и будет запускаться в отдельной горутине
 	Submitter(wg *sync.WaitGroup, ch chan<- database.Submission)
 	// GetProblem - получить условие задачи !!! ALERT, его надо получать по частям, см -> database.Task
 	GetProblem(taskID string) (database.Task, error)
 
+	// Checker - воркер, который занимается обновлением статусов посылок
 	Checker(wg *sync.WaitGroup, ch chan<- database.Submission)
 }
 

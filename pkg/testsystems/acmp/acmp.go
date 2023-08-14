@@ -1,0 +1,228 @@
+package acmp
+
+import (
+	"fmt"
+	"github.com/Baldislayer/t-bmstu/pkg/database"
+	"github.com/PuerkitoBio/goquery"
+	"log"
+	"net/http"
+	"net/http/cookiejar"
+	"net/url"
+	"strings"
+	"sync"
+	"time"
+)
+
+type ACMP struct {
+	Name string
+}
+
+func (t *ACMP) GetName() string {
+	return t.Name
+}
+
+func (t *ACMP) CheckLanguage(language string) bool {
+	languagesDict := map[string]struct{}{
+		"MinGW GNU C++ 13.1.0":        struct{}{},
+		"Python 3.11.0":               struct{}{},
+		"PascalABC.NET 3.8.3":         struct{}{},
+		"Java SE JDK 16.0.1":          struct{}{},
+		"Free Pascal 3.2.2":           struct{}{},
+		"Borland Delphi 7.0":          struct{}{},
+		"Microsoft Visual C++ 2017":   struct{}{},
+		"Microsoft Visual C# 2017":    struct{}{},
+		"Microsoft Visual Basic 2017": struct{}{},
+		"PyPy3.9 v7.3.9":              struct{}{},
+		"Go 1.16.3":                   struct{}{},
+		"Node.js 19.0.0":              struct{}{},
+	}
+
+	_, exist := languagesDict[language]
+
+	if !exist {
+		return false
+	}
+
+	return true
+}
+
+func (t *ACMP) GetLanguages() []string {
+	return []string{
+		"MinGW GNU C++ 13.1.0",
+		"Python 3.11.0",
+		"PascalABC.NET 3.8.3",
+		"Java SE JDK 16.0.1",
+		"Free Pascal 3.2.2",
+		"Borland Delphi 7.0",
+		"Microsoft Visual C++ 2017",
+		"Microsoft Visual C# 2017",
+		"Microsoft Visual Basic 2017",
+		"PyPy3.9 v7.3.9",
+		"Go 1.16.3",
+		"Node.js 19.0.0",
+	}
+}
+
+func (t *ACMP) Submitter(wg *sync.WaitGroup, ch chan<- database.Submission) {
+	jar, _ := cookiejar.New(nil)
+	client := &http.Client{Jar: jar}
+
+	// Выполнение первого запроса для аутентификации
+	loginURL := "https://acmp.ru/index.asp?main=enter&r=30147517425972369652497"
+	loginData := url.Values{
+		"lgn":      {"aukseu228"},
+		"password": {"M6v-rzz-Hgm-Skg"},
+	}
+	client.PostForm(loginURL, loginData)
+
+	for {
+		submissions, err := database.GetSubmitsWithStatus(t.GetName(), 0)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		// перебираем все решения
+		for _, submission := range submissions {
+			fileData := url.Values{
+				"lang":   {"CXX"},
+				"source": {string(submission.Code)},
+			}
+			id, err := Submit(client,
+				fmt.Sprintf("https://acmp.ru/index.asp?main=update&mode=upload&id_task=%s", submission.TaskID),
+				fileData,
+				submission.TaskID)
+			if err != nil {
+				fmt.Println(err)
+				// скипаем эту посылку
+				// подумать, может ее и удалить еще?
+				continue
+			}
+
+			// теперь надо передать по каналу, что был изменен статус этой задачи
+			submission.Status = 1
+			submission.Verdict = "Compiling"
+			submission.SubmissionNumber = id
+			ch <- submission
+		}
+
+		time.Sleep(time.Second)
+	}
+}
+
+func (t *ACMP) Checker(wg *sync.WaitGroup, ch chan<- database.Submission) {
+
+}
+
+func (t *ACMP) GetProblem(taskID string) (database.Task, error) {
+	taskURL := fmt.Sprintf("https://acmp.ru/index.asp?main=task&id_task=%s", taskID)
+
+	resp, err := http.Get(taskURL)
+	if err != nil {
+		fmt.Println("Error:", err)
+		return database.Task{}, err
+	}
+	defer resp.Body.Close()
+
+	utf8Reader, err := decodeWindows1251(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+		return database.Task{}, err
+	}
+
+	doc, err := goquery.NewDocumentFromReader(utf8Reader)
+	if err != nil {
+		log.Fatal(err)
+		return database.Task{}, err
+	}
+
+	var content string
+	startTag := "h1"
+	endTag := "<h4><i>Для отправки решения задачи необходимо <a href=\"/inc/register.asp\">зарегистрироваться</a> и авторизоваться!</i></h4>"
+
+	taskName := ""
+
+	doc.Find("h1").Each(func(i int, s *goquery.Selection) {
+		taskName = s.Text()
+	})
+
+	Constraints := map[string]string{}
+	ended := false
+	doc.Find(startTag).NextUntil(endTag).Each(func(i int, s *goquery.Selection) {
+		if s.Text() != "" {
+			if !ended {
+				ended = strings.Contains(s.Text(), "Для отправки решения задачи")
+
+				if !ended {
+					if strings.Contains(s.Text(), "Время") {
+						parts := strings.Split(s.Text(), "Память:")
+						if len(parts) >= 2 {
+							timePart := strings.TrimSpace(parts[0])
+							memoryPart := strings.TrimSpace(parts[1])
+
+							time := extractValuePref(timePart, "Время:")
+							memory := extractValueSuf(memoryPart, "Мб")
+
+							Constraints = map[string]string{
+								"time":   time,
+								"memory": memory,
+							}
+						} else {
+							fmt.Println("Не удалось извлечь время и память.")
+						}
+
+					} else {
+						elem, err := s.Html()
+						if err != nil {
+							return
+						}
+						content += elem
+					}
+				}
+			}
+		}
+	})
+
+	var Condition string
+	centerFound := false
+	h2InputFound := false
+	doc.Find(startTag).NextUntil("<h2>Входные данные</h2>").Each(func(i int, s *goquery.Selection) {
+		if !h2InputFound {
+			if s.Is("h2") && s.Text() == "Входные данные" {
+				h2InputFound = true
+				return
+			}
+
+			if centerFound {
+				elem, _ := s.Html()
+				Condition += elem
+			}
+
+			if s.Is("center") {
+				centerFound = true
+			}
+		}
+	})
+
+	// newDoc, err := goquery.NewDocumentFromReader(utf8Reader)
+	if err != nil {
+		log.Fatal(err)
+		return database.Task{}, err
+	}
+	Input := getMiddle(doc.Find("h2:contains('Входные данные')").First(),
+		"Выходные данные")
+	Output := getMiddle(doc.Find("h2:contains('Выходные данные')").First(),
+		"Пример")
+
+	tests := parseTableToJSON(doc.Find("h2:contains('Пример')").First().Next())
+
+	return database.Task{
+		Name:        taskName,
+		Condition:   Condition,
+		Constraints: Constraints,
+		InputData:   Input,
+		OutputData:  Output,
+		Tests: map[string]interface{}{
+			"tests": tests,
+		},
+	}, nil
+}

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/Baldislayer/t-bmstu/pkg/database"
 	"github.com/gin-gonic/gin"
+	"net/http"
 )
 
 func (h *Handler) add(c *gin.Context) {
@@ -16,4 +17,8 @@ func (h *Handler) add(c *gin.Context) {
 		Students: []string{"sh"},
 	},
 		members)
+}
+
+func (h *Handler) home(c *gin.Context) {
+	c.HTML(http.StatusOK, "home.tmpl", gin.H{})
 }
