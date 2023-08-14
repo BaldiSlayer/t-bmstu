@@ -49,7 +49,7 @@ func (h *Handler) getContestTasks(c *gin.Context) {
 
 	sort.Sort(ByID(taskList))
 
-	c.HTML(http.StatusOK, "tasks-list.tmpl", gin.H{
+	c.HTML(http.StatusOK, "contest-tasks-list.tmpl", gin.H{
 		"Tasks": taskList,
 	})
 }

@@ -6,8 +6,13 @@
     <title>Группы</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="/styles/base.css?hash=v86ads6df8" rel="stylesheet">
-    <link href="/styles/home.css?hash=v86ddfasdi6df8" rel="stylesheet">
+    <link href="/styles/base.css?hash=v866df8" rel="stylesheet">
+
+    <style>
+        .dark-mode .task-card {
+            border: 2px solid #475965;
+        }
+    </style>
 </head>
 
 <body>
@@ -65,25 +70,18 @@
 
 
         <div id="content" class="collapsed">
-            <div class="card group-card mt-2 mb-2" onclick="location.href='/view/groups';">
-                <div class="card-body">
-                    <h5 class="card-title blue-text" style="font-weight: bold;">Группы</h5>
-                    <p class="card-text simple-text">Здесь находятся все твои группы</p>
-                </div>
-            </div>
+            <h1 class="simple-text">Задачи c {{.TestSystem}}</h1>
+            <div id="task-list" class="mt-4">
 
-            <div class="card group-card mt-2 mb-2" onclick="location.href='/view/timus';">
-                <div class="card-body">
-                    <h5 class="card-title blue-text" style="font-weight: bold;">Timus</h5>
-                    <p class="card-text simple-text">Тут ты можешь решать задачи с ACM Timus</p>
+                {{range .Tasks}}
+                <div class="card task-card mt-2 mb-2" onclick="redirectToTask('{{.ID}}');">
+                    <div class="card-body">
+                        <h5 class="card-title blue-text">{{.Name}}</h5>
+                        <!-- <p class="card-text">Description of task {{.ID}}</p> -->
+                    </div>
                 </div>
-            </div>
+                {{end}}
 
-            <div class="card group-card mt-2 mb-2" onclick="location.href='/view/acmp';">
-                <div class="card-body">
-                    <h5 class="card-title blue-text" style="font-weight: bold;">ACMP</h5>
-                    <p class="card-text simple-text">Тут ты можешь решать задачи с ACMP</p>
-                </div>
             </div>
         </div>
 
@@ -91,6 +89,11 @@
 
 </div>
 
+<script>
+    function redirectToTask(taskId) {
+        window.location.href = "/view/problem/" + taskId;
+    }
+</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/scripts/base.js?hash=1fs2"></script>
 </body>

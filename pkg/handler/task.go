@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/Baldislayer/t-bmstu/pkg/testsystems/acmp"
 	"github.com/Baldislayer/t-bmstu/pkg/testsystems/timus"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -25,8 +26,33 @@ func (h *Handler) timusTaskList(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, "bad req")
 	}
 
-	c.HTML(http.StatusOK, "ts_tasks_list.tmpl", gin.H{
-		"Tasks": taskList,
+	c.HTML(http.StatusOK, "testsystem-tasks-list.tmpl", gin.H{
+		"TestSystem": "Timus",
+		"Tasks":      taskList,
+	})
+}
+
+func (h *Handler) acmpTaskList(c *gin.Context) {
+	count := c.Query("count")
+
+	parsedCount, err := strconv.Atoi(count)
+	if err != nil {
+		parsedCount = 15
+	}
+
+	if parsedCount > 50 {
+		parsedCount = 50
+	}
+
+	taskList, err := acmp.GetTaskList(parsedCount)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, "bad req")
+	}
+
+	c.HTML(http.StatusOK, "testsystem-tasks-list.tmpl", gin.H{
+		"TestSystem": "ACMP",
+		"Tasks":      taskList,
 	})
 }
 

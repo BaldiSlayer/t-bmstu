@@ -30,6 +30,14 @@ function updateTable(data) {
         verdictClass = "badge-danger";
     }
 
+    // Получаем класс текущей первой строки таблицы
+    const firstRowClass = table.querySelector("tr:first-child")?.classList[0];
+
+    // Определяем класс для новой строки в зависимости от класса текущей первой строки
+    const newRowClass = firstRowClass === "even" ? "odd" : "even";
+
+    newRow.className = newRowClass;
+
     newRow.innerHTML = `
         <td>${data.id}</td>
         <td>${data.language}</td>
@@ -47,6 +55,7 @@ function updateTable(data) {
         table.insertBefore(newRow, table.firstChild);
     }
 }
+
 
 const url = window.location.href;
 const parts = url.split("/");

@@ -2,6 +2,7 @@ package acmp
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
@@ -169,4 +170,66 @@ func Submit(client *http.Client, submitURL string, fileData url.Values, taskId s
 	}
 
 	return "1", nil
+}
+
+func endChecking(verdict string) bool {
+	if verdict == "Compilation error" || verdict == "Wrong answer" || verdict == "Accepted" ||
+		verdict == "Time limit exceeded" || verdict == "Memory limit exceeded" || verdict == "Runtime error (non-zero exit code)" ||
+		verdict == "Runtime error" {
+		return true
+	}
+	return false
+}
+
+type Task struct {
+	ID   string
+	Name string
+}
+
+func removeLeadingZeros(s string) string {
+	trimmed := strings.TrimLeft(s, "0")
+	if trimmed == "" {
+		return "0"
+	}
+	return trimmed
+}
+
+func GetTaskList(count int) ([]Task, error) {
+	result, err := http.Get("https://acmp.ru/index.asp?main=tasks")
+	if err != nil {
+		fmt.Println("Error:", err)
+	}
+	defer result.Body.Close()
+
+	utf8Reader, err := decodeWindows1251(result.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	doc, err := goquery.NewDocumentFromReader(utf8Reader)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var tasks []Task
+
+	doc.Find("table.main tr.white").Each(func(i int, s *goquery.Selection) {
+		if i < count {
+			id := s.Find("td").Eq(0).Text()
+			name := s.Find("td").Eq(1).Text()
+
+			id = removeLeadingZeros(strings.TrimSpace(id))
+			name = strings.TrimSpace(name)
+
+			if id != "" && name != "" {
+				idBytes := []byte("acmp" + id)
+				tasks = append(tasks, Task{
+					ID:   base64.StdEncoding.EncodeToString(idBytes),
+					Name: name,
+				})
+			}
+		}
+	})
+
+	return tasks, nil
 }

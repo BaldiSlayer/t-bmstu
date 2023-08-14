@@ -64,6 +64,22 @@ func (t *ACMP) GetLanguages() []string {
 }
 
 func (t *ACMP) Submitter(wg *sync.WaitGroup, ch chan<- database.Submission) {
+	defer wg.Done()
+
+	myToACMPDict := map[string]string{
+		"MinGW GNU C++ 13.1.0":        "CPP",
+		"Python 3.11.0":               "PY",
+		"PascalABC.NET 3.8.3":         "PP",
+		"Java SE JDK 16.0.1":          "JAVA",
+		"Free Pascal 3.2.2":           "PAS",
+		"Borland Delphi 7.0":          "DPR",
+		"Microsoft Visual C++ 2017":   "CXX",
+		"Microsoft Visual C# 2017":    "CS",
+		"Microsoft Visual Basic 2017": "BAS",
+		"PyPy3.9 v7.3.9":              "PYPY",
+		"Go 1.16.3":                   "GO",
+		"Node.js 19.0.0":              "JS",
+	}
 	jar, _ := cookiejar.New(nil)
 	client := &http.Client{Jar: jar}
 
@@ -84,7 +100,7 @@ func (t *ACMP) Submitter(wg *sync.WaitGroup, ch chan<- database.Submission) {
 		// перебираем все решения
 		for _, submission := range submissions {
 			fileData := url.Values{
-				"lang":   {"CXX"},
+				"lang":   {myToACMPDict[submission.Language]},
 				"source": {string(submission.Code)},
 			}
 			id, err := Submit(client,
@@ -105,12 +121,99 @@ func (t *ACMP) Submitter(wg *sync.WaitGroup, ch chan<- database.Submission) {
 			ch <- submission
 		}
 
-		time.Sleep(time.Second)
+		// TODO acmp придется тестировать на rps защиту
+		time.Sleep(time.Second * 2)
 	}
 }
 
 func (t *ACMP) Checker(wg *sync.WaitGroup, ch chan<- database.Submission) {
+	// жесткий парсинг таблицы результатов
+	defer wg.Done()
 
+	for {
+		submissions, err := database.GetSubmitsWithStatus(t.GetName(), 1)
+
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		submissionsDict := make(map[string]database.Submission)
+		submissionsIDs := make([]string, 0)
+
+		for _, submission := range submissions {
+			submissionsDict[submission.SubmissionNumber] = submission
+			submissionsIDs = append(submissionsIDs, submission.SubmissionNumber)
+		}
+
+		pageNum := 0
+		for len(submissions) != 0 {
+			currentUrl := fmt.Sprintf("https://acmp.ru/index.asp?main=status&id_mem=%d&id_res=0&id_t=0&page=%d", 333835, pageNum)
+
+			result, err := http.Get(currentUrl)
+			if err != nil {
+				fmt.Println("Error:", err)
+			}
+			defer result.Body.Close()
+
+			utf8Reader, err := decodeWindows1251(result.Body)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			doc, err := goquery.NewDocumentFromReader(utf8Reader)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			table := doc.Find("table.main.refresh[align='center']")
+			table.Find("tr").Each(func(index int, rowHtml *goquery.Selection) {
+				columns := rowHtml.Find("td")
+				idStr := columns.Eq(0).Text()
+
+				for _, submissionID := range submissionsIDs {
+					if idStr == submissionID {
+						// Это строка с нужным id, вы можете выполнить здесь нужные действия 5 6 7 8
+						// удаление из словаря и списка
+						submission, exists := submissionsDict[idStr]
+						if !exists {
+							log.Println("Submission with ID not found:", idStr)
+							return
+						}
+						delete(submissionsDict, idStr)
+
+						for i, id := range submissionsIDs {
+							if id == idStr {
+								submissionsIDs = append(submissionsIDs[:i], submissionsIDs[i+1:]...)
+								break
+							}
+						}
+
+						submissions = submissions[1:]
+
+						verdict := strings.TrimSpace(columns.Eq(5).Text())
+						test := strings.TrimSpace(columns.Eq(6).Text())
+						executionTime := strings.TrimSpace(columns.Eq(7).Text())
+						memoryUsed := strings.TrimSpace(columns.Eq(8).Text())
+
+						submission.Verdict = verdict
+						submission.Test = test
+						submission.ExecutionTime = executionTime
+						submission.MemoryUsed = memoryUsed
+
+						if endChecking(verdict) {
+							submission.Status = 2
+						}
+
+						ch <- submission
+					}
+				}
+			})
+
+			pageNum++
+		}
+
+		time.Sleep(time.Second * 2)
+	}
 }
 
 func (t *ACMP) GetProblem(taskID string) (database.Task, error) {
