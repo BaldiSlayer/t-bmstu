@@ -63,29 +63,11 @@
             </div>
         </nav>
 
-        {{if .Groups}}
-        <div id="content" class="collapsed colored">
-        {{else}}
+
         <div id="content" class="collapsed">
-        {{end}}
-            <div class="groups mt-2">
-                {{if .Groups}}
-                <h1 class="simple-text">Группы</h1>
-                <div id="task-list" class="mt-4">
-                    {{range .Groups}}
-                    <div class="card group-card mt-2 mb-2" onclick="location.href='group/{{.ID}}/';">
-                        <div class="card-body">
-                            <h5 class="card-title blue-text" style="font-weight: bold;">{{.Title}}</h5>
-                            <p class="card-text simple-text">Здесь должно быть что-то про группу {{.ID}}, но я не придумал что :)</p>
-                        </div>
-                    </div>
-                    {{end}}
-                </div>
-                {{else}}
-                <div class="text-center text-muted align-middle mt-4">
-                    <h2>Вы еще не состоите ни в какой группе</h2>
-                </div>
-                {{end}}
+            <div class="text-center text-muted align-middle mt-4">
+                <h2>Через какое-то время тут будет "обертка" <a href="https://hw.iu9.bmstu.ru"> hw.iu9.bmstu.ru </a> </h2>
+
             </div>
         </div>
     </div>

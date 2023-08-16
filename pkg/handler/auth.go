@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/Baldislayer/t-bmstu/pkg/repository"
+	"github.com/Baldislayer/t-bmstu/pkg/database"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -81,7 +81,7 @@ func authMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		role, err := repository.GetUserRole(username)
+		role, err := database.GetUserRole(username)
 		if err != nil {
 			c.Redirect(http.StatusSeeOther, "/auth/login")
 			c.Abort()
@@ -162,7 +162,7 @@ func checkLoginAndPassword(username, password string) (bool, string) {
 
 	hashString := hex.EncodeToString(hash[:])
 
-	exist, err := repository.AuthenticateUser(username, hashString)
+	exist, err := database.AuthenticateUser(username, hashString)
 
 	if err != nil {
 		fmt.Println("error")
@@ -173,7 +173,7 @@ func checkLoginAndPassword(username, password string) (bool, string) {
 		return false, ""
 	}
 
-	role, err := repository.GetUserRole(username)
+	role, err := database.GetUserRole(username)
 
 	if err != nil {
 		fmt.Println("error")
@@ -199,13 +199,13 @@ func (h *Handler) signUp(c *gin.Context) {
 			}
 
 			// fmt.Println(123)
-			exist, err := repository.CheckIfUserExists(form.Username)
+			exist, err := database.CheckIfUserExists(form.Username)
 			if err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{"error": err})
 			}
 
 			if exist {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Такой пользователь существует"})
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Пользователь с таким никнеймом уже есть"})
 				return
 			}
 
@@ -213,7 +213,7 @@ func (h *Handler) signUp(c *gin.Context) {
 
 			hashPassword := hex.EncodeToString(hash[:])
 
-			repository.CreateUser(repository.User{
+			database.CreateUser(database.User{
 				Username:     form.Username,
 				PasswordHash: hashPassword,
 				LastName:     form.LastName,

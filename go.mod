@@ -7,6 +7,7 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-contrib/sessions v0.0.5
 	github.com/gin-gonic/gin v1.9.1
+	github.com/gorilla/websocket v1.5.0
 	github.com/jackc/pgx/v4 v4.18.1
 	github.com/spf13/viper v1.16.0
 	golang.org/x/oauth2 v0.10.0

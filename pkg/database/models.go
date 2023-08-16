@@ -1,21 +1,8 @@
-package repository
+package database
 
 import "encoding/json"
 
 type Submission struct {
-	ID             int    `json:"id"`
-	SenderLogin    string `json:"sender_login"`
-	TaskID         string `json:"task_id"`
-	TestingSystem  string `json:"testing_system"`
-	Code           string `json:"code"`
-	SubmissionTime string `json:"submission_time"`
-	ContestID      int    `json:"contest_id"`
-	ContestTaskID  int    `json:"contest_task_id"`
-	Language       string `json:"language"`
-	SVerdictID     string `json:"sverdict_id"`
-}
-
-type SubmissionVerdict struct {
 	ID               int    `json:"id"`
 	SenderLogin      string `json:"sender_login"`
 	TaskID           string `json:"task_id"`
@@ -30,13 +17,7 @@ type SubmissionVerdict struct {
 	MemoryUsed       string `json:"memory_used"`
 	Test             string `json:"test"`
 	SubmissionNumber string `json:"submission_number"`
-}
-
-type UnverifiedSubmission struct {
-	SubmissionID         string `json:"submission_id"`
-	ExternalSubmissionID string `json:"external_submission_id"`
-	TestingSystem        string `json:"testing_system"`
-	JudgeId              string `json:"judge_id"`
+	Status           int    `json:"status"` // Статус проверки 0 - не отправлено, 1 - проверяется, 2 - проверка окончена
 }
 
 type Contest struct {
@@ -46,6 +27,7 @@ type Contest struct {
 	Participants map[string]interface{} `json:"participants"`
 	Results      map[string]interface{} `json:"results"`
 	Tasks        map[string]interface{} `json:"tasks"`
+	GroupOwner   int                    `json:"group_owner"`
 }
 
 type Task struct {
@@ -70,14 +52,14 @@ type User struct {
 	Role         string            `json:"role"`
 	SolvedTasks  []string          `json:"solved_tasks"`
 	Groups       []json.RawMessage `json:"groups"`
+	Tasks        []json.RawMessage `json:"tasks"`
 }
 
 type Group struct {
 	ID         int      `json:"id"`
 	Title      string   `json:"title"`
-	Contests   []int    `json:"contests"`
 	Students   []string `json:"students"`
 	Teachers   []string `json:"teachers"`
 	Admins     []string `json:"admins"`
-	InviteCode string   `json:"invite_code"`
+	InviteCode []byte   `json:"invite_code"`
 }

@@ -1,9 +1,7 @@
 package handler
 
 import (
-	"encoding/json"
-	"fmt"
-	"github.com/Baldislayer/t-bmstu/pkg/repository"
+	"github.com/Baldislayer/t-bmstu/pkg/testsystems/acmp"
 	"github.com/Baldislayer/t-bmstu/pkg/testsystems/timus"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -15,11 +13,9 @@ func (h *Handler) timusTaskList(c *gin.Context) {
 
 	parsedCount, err := strconv.Atoi(count)
 	if err != nil {
-		// TODO
 		parsedCount = 15
 	}
 
-	// TODO
 	if parsedCount > 50 {
 		parsedCount = 50
 	}
@@ -30,46 +26,33 @@ func (h *Handler) timusTaskList(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, "bad req")
 	}
 
-	c.HTML(http.StatusOK, "ts_tasks_list.tmpl", gin.H{
-		"Tasks": taskList,
+	c.HTML(http.StatusOK, "testsystem-tasks-list.tmpl", gin.H{
+		"TestSystem": "Timus",
+		"Tasks":      taskList,
 	})
 }
 
-func (h *Handler) getTask(c *gin.Context) {
-	taskId := c.Param("id")
-	taskInfo, err := TaskInfoById(taskId)
+func (h *Handler) acmpTaskList(c *gin.Context) {
+	count := c.Query("count")
+
+	parsedCount, err := strconv.Atoi(count)
+	if err != nil {
+		parsedCount = 15
+	}
+
+	if parsedCount > 50 {
+		parsedCount = 50
+	}
+
+	taskList, err := acmp.GetTaskList(parsedCount)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, "bad req")
 	}
 
-	taskParts, err := GetTaskParts(taskId, &taskInfo)
-
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-	}
-
-	submissons := repository.GetVerdicts(c.GetString("username"), taskInfo.id, taskInfo.onlineJudge.GetName())
-
-	type Test struct {
-		Input  string `json:"input"`
-		Output string `json:"output"`
-	}
-
-	var tests []Test
-	if testStr, ok := taskParts.Tests["tests"].(string); ok {
-		err := json.Unmarshal([]byte(testStr), &tests)
-		if err != nil {
-			fmt.Println("Error:", err)
-			return
-		}
-	}
-
-	c.HTML(http.StatusOK, "task.tmpl", gin.H{
-		"Task":        taskParts,
-		"Tests":       tests,
-		"Languages":   taskInfo.onlineJudge.GetLanguages(),
-		"Submissions": submissons,
+	c.HTML(http.StatusOK, "testsystem-tasks-list.tmpl", gin.H{
+		"TestSystem": "ACMP",
+		"Tasks":      taskList,
 	})
 }
 
@@ -94,21 +77,10 @@ func (h *Handler) submitTask(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Task submitted successfully",
-	})
-}
-
-// TODO вынести в какой-то другой файл / убрать это по причине "все контесты" лежат в какой-то группе
-func (h *Handler) getContests(c *gin.Context) {
-	// пока что я буду отображать все контесты
-	// сделать отображение только тех, в которые он может зайти
-
-	contests := repository.GetContests()
-
-	c.HTML(http.StatusOK, "contests.tmpl", gin.H{
-		"Contests": contests,
 	})
 }

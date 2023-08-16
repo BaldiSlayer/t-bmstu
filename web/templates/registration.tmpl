@@ -8,6 +8,10 @@
   <!-- Подключаем Bootstrap CSS -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
 
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+
   <style>
 
     .login-form {
@@ -63,16 +67,18 @@
               <div class="mb-3">
                 <input type="password" class="form-control" id="password" placeholder="Пароль" required>
               </div>
-              <div class="mb-3">
+              <div class="mb-1">
                 <input type="password" class="form-control" id="password_repeat" placeholder="Повторите пароль" required>
               </div>
-              <small class="text-danger" id="password_match_warning" style="display: none;">Пароли не совпадают</small>
+              <div class="mb-2">
+                <small class="text-danger" id="password_match_warning" style="display: none;">Пароли не совпадают</small>
+              </div>
               <div class="mb-3">
                 <input type="text" class="form-control" id="group" placeholder="Группа" required>
               </div>
               <div class="mb-3">
                 <input type="email" class="form-control" id="email" placeholder="Email" required
-                       pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+                       pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
                        title="Введите корректный email адрес, например, user@example.com">
               </div>
               <div class="text-center">
@@ -155,14 +161,27 @@
       });
 
       if (response.ok) {
-        // Если запрос выполнен успешно, перенаправляем пользователя на другую страницу
-
+        window.location.href = "/auth/login";
       } else {
+        const responseData = await response.json(); // Ожидаем разрешения промиса
+        Toastify({
+          text: responseData["error"],
+          duration: 2000,
+          gravity: 'top',
+          position: 'center',
+          style: {
+            background: '#FF4040', // Изменим цвет фона через style
+            color: 'white', // Изменим цвет текста
+            fontWeight: 'bold'
+          },
+          className: 'custom-toast',
+          stopOnFocus: true,
+        }).showToast();
+
 
       }
     } catch (error) {
-      // Если произошла ошибка при выполнении запроса, показываем сообщение об ошибке
-      // errorMessageElement.innerText = 'Произошла ошибка. Попробуйте позже.';
+
     }
   };
 </script>

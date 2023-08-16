@@ -1,10 +1,7 @@
 package handler
 
 import (
-	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
-	"github.com/spf13/viper"
 	"html/template"
 	"strings"
 )
@@ -15,20 +12,19 @@ type Handler struct {
 func (h *Handler) InitRoutes() *gin.Engine {
 	router := gin.New()
 
-	store := cookie.NewStore([]byte(viper.GetString("SessionSecret")))
-	store.Options(sessions.Options{
-		Path:     "/", // Установка пути для куки на "/"
-		MaxAge:   86400,
-		HttpOnly: true,
-		// TODO add Secure and other need able options
-	})
-	router.Use(sessions.Sessions(sessionName, store))
-
 	router.SetFuncMap(template.FuncMap{
 		"nl2br": nl2br,
+		"inc": func(index int) int {
+			return index + 1
+		},
+		"odd": func(index int) bool {
+			return index%2 == 0
+		},
 	})
 	router.LoadHTMLGlob("web/templates/*")
 	router.Static("/images", "web/static/images")
+	router.Static("/styles", "web/static/styles")
+	router.Static("/scripts", "web/static/scripts")
 
 	auth := router.Group("/auth")
 	{
@@ -43,32 +39,60 @@ func (h *Handler) InitRoutes() *gin.Engine {
 		github.GET("/githubCallback", h.githubCallback)
 	}
 
+	api := router.Group("/api")
+	api.Use(authMiddleware())
+	{
+		api.GET("/ws/contest/:contest_id/problem/:problem_id", h.handleWebSocket)
+	}
+
 	view := router.Group("/view")
 	view.Use(authMiddleware())
 	{
-		view.GET("/add", h.add)
 		view.GET("/home", h.home)
-		view.GET("/timus", h.timusTaskList)
-		view.GET("/problem/:id", h.getTask)
-		view.POST("/problem/:id/submit", h.submitTask)
 
-		view.GET("/contests", h.getContests)
+		forum := view.Group("/forum")
+		{
+			forum.GET("/", h.forumMainPage)
+		}
+
+		profile := view.Group("/profile")
+		{
+			profile.GET("/", h.profileMainPage)
+		}
+
+		hwIu9Bmstu := view.Group("/hw_iu9_bmstu")
+		{
+			hwIu9Bmstu.GET("/", h.hwIu9MainPage)
+		}
+
+		view.GET("/timus", h.timusTaskList)
+		view.GET("/acmp", h.acmpTaskList)
+
+		problem := view.Group("/problem")
+		{
+			problem.GET("/:id", h.getTask)
+			// TODO submitTask == submitContestTask
+			problem.POST("/:id/submit", h.submitTask)
+		}
 
 		contest := view.Group("/contest/:contest_id")
 		{
-			contest.GET("/tasks", h.getContestTasks)
-			contest.GET("/task/:task_id", h.getContestTask)
-			contest.POST("/task/:task_id/submit", h.submitContestTask)
+			contest.GET("/problems", h.getContestTasks)
+			contest.GET("/problem/:problem_id", h.getTask)
+			contest.POST("/problem/:problem_id/submit", h.submitContestTask)
 		}
 
+		view.GET("/groups", h.groups)
 		groups := view.Group("/group")
 		{
 			groups.GET("/invite/:invite_hash", h.checkInvite)
 			group := groups.Group("/:group_id")
 			{
 				group.GET("", h.getGroupContests)
-				group.GET("/contest/:contest_id/tasks", h.getContestTasks)
-				// TODO вести дальше до задач
+				groupContest := group.Group("/contest/:contest_id")
+				{
+					groupContest.GET("/tasks", h.getContestTasks)
+				}
 			}
 		}
 	}

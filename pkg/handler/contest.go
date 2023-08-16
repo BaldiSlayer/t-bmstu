@@ -3,8 +3,9 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Baldislayer/t-bmstu/pkg/repository"
+	"github.com/Baldislayer/t-bmstu/pkg/database"
 	"github.com/gin-gonic/gin"
+	"html/template"
 	"net/http"
 	"sort"
 	"strconv"
@@ -27,14 +28,14 @@ func (h *Handler) getContestTasks(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 
-	contest, err := repository.GetContestInfoById(contestId)
+	contest, err := database.GetContestInfoById(contestId)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 		return
 	}
 	tasks := contest.Tasks
 
-	task_list := []ContestTableTask{}
+	taskList := []ContestTableTask{}
 
 	for key, value := range tasks {
 		_, taskParts, err := GetTaskPartsById(value.(string))
@@ -42,35 +43,57 @@ func (h *Handler) getContestTasks(c *gin.Context) {
 		if err != nil {
 			fmt.Print(err)
 		} else {
-			task_list = append(task_list, ContestTableTask{ID: key, Name: taskParts.Name})
+			taskList = append(taskList, ContestTableTask{ID: key, Name: taskParts.Name})
 		}
 	}
 
-	sort.Sort(ByID(task_list))
+	sort.Sort(ByID(taskList))
 
-	c.HTML(http.StatusOK, "constest_tasks_list.tmpl", gin.H{
-		"Tasks": task_list,
+	c.HTML(http.StatusOK, "contest-tasks-list.tmpl", gin.H{
+		"Tasks": taskList,
 	})
 }
 
-func (h *Handler) getContestTask(c *gin.Context) {
-	contestId, err := strconv.Atoi(c.Param("contest_id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-	}
+func (h *Handler) getTask(c *gin.Context) {
+	stringContestId := c.Param("contest_id")
+	ok := true
+	value := ""
+	contestId := -1
+	intContestTaskId := -1
 
-	taskId := c.Param("task_id")
-	contest, err := repository.GetContestInfoById(contestId)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err})
-		return
-	}
-	tasks := contest.Tasks
+	if stringContestId != "" {
+		// получаем все нужное для контеста
+		contestID, err := strconv.Atoi(stringContestId)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		}
 
-	value, ok := tasks[taskId]
+		taskId := c.Param("problem_id")
+		contest, err := database.GetContestInfoById(contestID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err})
+			return
+		}
+		tasks := contest.Tasks
+
+		problemId, exist := tasks[taskId]
+		value = problemId.(string)
+		ok = exist
+
+		intContestTaskId, err = strconv.Atoi(taskId)
+
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		contestId = contestID
+	} else {
+		value = c.Param("id")
+	}
 
 	if ok {
-		taskInfo, taskParts, err := GetTaskPartsById(value.(string))
+		taskInfo, taskParts, err := GetTaskPartsById(value)
 
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -90,17 +113,14 @@ func (h *Handler) getContestTask(c *gin.Context) {
 			}
 		}
 
-		intContestTaskId, err := strconv.Atoi(taskId)
+		parts, err := TaskInfoById(value)
+		submissions := database.GetVerdicts(c.GetString("username"), parts.id, parts.onlineJudge.GetName(), contestId, intContestTaskId)
 
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-
-		submissions, err := repository.GetVerditctsOfContestTask(c.GetString("username"), contestId, intContestTaskId)
-
-		c.HTML(http.StatusOK, "task.tmpl", gin.H{
+		c.HTML(http.StatusOK, "task-page.tmpl", gin.H{
 			"Task":        taskParts,
+			"Condition":   template.HTML(taskParts.Condition),
+			"InputData":   template.HTML(taskParts.InputData),
+			"OutputData":  template.HTML(taskParts.OutputData),
 			"Tests":       tests,
 			"Languages":   taskInfo.onlineJudge.GetLanguages(),
 			"Submissions": submissions,
@@ -126,7 +146,7 @@ func (h *Handler) submitContestTask(c *gin.Context) {
 		return
 	}
 
-	contestTaskId, err := strconv.Atoi(c.Param("task_id"))
+	contestTaskId, err := strconv.Atoi(c.Param("problem_id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 		return
@@ -138,7 +158,7 @@ func (h *Handler) submitContestTask(c *gin.Context) {
 		return
 	}
 
-	contest, err := repository.GetContestInfoById(contestId)
+	contest, err := database.GetContestInfoById(contestId)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err})
 		return

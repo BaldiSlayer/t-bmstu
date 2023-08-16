@@ -1,0 +1,33 @@
+.task-card {
+    background: white;
+    border: none; /* Удаляем все границы */
+    cursor: pointer;
+    border-bottom: 1px solid #ddd; /* Добавляем нижнюю границу */
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.selected {
+    text-decoration: underline;
+    font-weight: bold;
+}
+
+.dark-mode .task-card {
+    background: #36474f;
+
+}
+
+.task-card:last-child {
+    border-bottom: none; /* Удаляем нижнюю границу у последней карточки */
+    padding-bottom: 10px; /* Удаляем отступ снизу для последней карточки */
+}
+
+.task-card:hover {
+    background-color: #f8f9fa;
+    /*border-radius: 10px; */
+}
+
+.dark-mode .task-card:hover {
+    background-color: hsl(200, 30%, 30%); /* Светло-голубой цвет */
+    /* border-radius: 10px; */
+}

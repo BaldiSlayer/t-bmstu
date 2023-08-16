@@ -4,10 +4,13 @@ package handler
 
 import (
 	"encoding/base64"
+	"errors"
 	"fmt"
-	"github.com/Baldislayer/t-bmstu/pkg/repository"
+	"github.com/Baldislayer/t-bmstu/pkg/database"
 	"github.com/Baldislayer/t-bmstu/pkg/testsystems"
+	"github.com/Baldislayer/t-bmstu/pkg/websockets"
 	"strings"
+	"time"
 )
 
 type TaskInfo struct {
@@ -37,29 +40,29 @@ func TaskInfoById(s string) (TaskInfo, error) {
 	return TaskInfo{}, fmt.Errorf("неподдерживаемая система или некорректный формат")
 }
 
-func GetTaskParts(taskId string, taskInfo *TaskInfo) (repository.Task, error) {
-	exist, taskParts, err := repository.TaskExist(taskId)
+func GetTaskParts(taskId string, taskInfo *TaskInfo) (database.Task, error) {
+	exist, taskParts, err := database.TaskExist(taskId)
 
 	if !exist {
 		taskParts, err = taskInfo.onlineJudge.GetProblem(taskInfo.id)
 
 		if err != nil {
-			return repository.Task{}, err
+			return database.Task{}, err
 		}
 
 		taskParts.ID = taskId
 		// надо добавить в базу данных
-		repository.AddProblem(taskParts)
+		database.AddProblem(taskParts)
 	}
 
 	return taskParts, nil
 }
 
-func GetTaskPartsById(task_id string) (TaskInfo, repository.Task, error) {
+func GetTaskPartsById(task_id string) (TaskInfo, database.Task, error) {
 	taskInfo, err := TaskInfoById(task_id)
 
 	if err != nil {
-		return TaskInfo{}, repository.Task{}, err
+		return TaskInfo{}, database.Task{}, err
 	}
 
 	taskParts, err := GetTaskParts(task_id, &taskInfo)
@@ -74,12 +77,35 @@ func TaskSubmit(myTaskId string, login string, SourceCode string, Language strin
 		return err
 	}
 
-	err = taskInfo.onlineJudge.Submit(login,
-		taskInfo.id,
-		SourceCode,
-		Language,
-		contestId,
-		contestTaskId)
+	currentTime := time.Now()
+	currentTimeString := currentTime.Format("2006-01-02 15:04:05")
+	submission := database.Submission{
+		SenderLogin:      login,
+		TaskID:           taskInfo.id,
+		TestingSystem:    taskInfo.onlineJudge.GetName(),
+		Code:             []byte(SourceCode),
+		Language:         Language,
+		ContestTaskID:    contestTaskId,
+		ContestID:        contestId,
+		SubmissionTime:   currentTimeString,
+		Verdict:          "Waiting",
+		ExecutionTime:    "-",
+		MemoryUsed:       "-",
+		Test:             "-",
+		SubmissionNumber: "-",
+	}
+
+	if !taskInfo.onlineJudge.CheckLanguage(Language) {
+		return errors.New("no such language")
+	}
+
+	id, err := database.AddSubmission(submission)
+	if err != nil {
+		return err
+	}
+
+	submission.ID = id
+	go websockets.SendMessageToUser(submission.SenderLogin, submission)
 
 	return err
 }

@@ -1,0 +1,9 @@
+.hover-highlight:hover {
+    background-color: rgba(38,131,238, 0.1);
+    filter: brightness(0.8);
+    transition: background-color 0.3s ease, filter 0.3s ease;
+}
+
+.dark-mode .task-card {
+    border: 2px solid #475965 !important;
+}

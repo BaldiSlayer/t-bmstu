@@ -1,0 +1,135 @@
+.problem_limits {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.badge-warning {
+    color: #ffffff;
+    background-color: #ffc107;
+}
+
+.badge-success {
+    color: #ffffff;
+    background-color: #07b724;
+}
+
+.badge-danger {
+    color: #ffffff;
+    background-color: #c0052b;
+}
+
+.badge-info {
+    color: #ffffff;
+    background-color: #0573b6;
+}
+
+.coding-area {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 8px;
+}
+
+.test-container {
+    display: flex;
+    gap: 20px;
+    align-items: stretch;
+}
+
+.test-box {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    border: 2px solid #eaeaea;
+    padding: 10px;
+    border-radius: 10px;
+    width: 45%;
+    background-color: #f9f9f9;
+}
+
+.test-input, .test-output {
+    color: #007bff;
+    margin-bottom: 10px;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    overflow-x: auto;
+}
+
+.test-output {
+    color: #28a745;
+}
+
+.copy-icon {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    cursor: pointer;
+    display: none;
+}
+
+.test-box:hover .copy-icon {
+    display: block;
+}
+
+.example_h6 {
+    font-weight: bold;
+}
+
+.dark-mode .test-input {
+    color: orange;
+}
+
+.dark-mode .dropdown-menu {
+    background-color: #273238;
+    color: white;
+}
+
+.dark-mode .dropdown-item {
+    color: white;
+}
+
+.even th, .even td {
+    background-color: white !important;
+}
+
+.odd th, .odd td {
+    background-color: #f1f2ed !important;
+}
+
+.dark-mode .odd th,
+.dark-mode .odd td {
+    background-color: #273238 !important;
+    color: white !important;
+}
+
+.dark-mode .even th,
+.dark-mode .even td {
+    background-color: #273238 !important;
+    color: white !important;
+}
+
+
+.dark-mode .test-box {
+    background-color: #36474f;
+    border: 2px solid #475965;
+}
+
+.dark-mode .coding-area {
+    border: 2px solid #475965;
+}
+
+body.dark-mode .table .badge-success {
+    background-color: #28a745;
+}
+
+body.dark-mode .table .badge-warning {
+    background-color: #ffc107;
+}
+
+body.dark-mode .table .badge-info {
+    background-color: #17a2b8;
+}
+
+body.dark-mode .table .badge-danger {
+    background-color: #dc3545;
+}
