@@ -27,7 +27,6 @@ type TestSystem interface {
 	Submitter(wg *sync.WaitGroup, ch chan<- database.Submission)
 	// GetProblem - получить условие задачи !!! ALERT, его надо получать по частям, см -> database.Task
 	GetProblem(taskID string) (database.Task, error)
-
 	// Checker - воркер, который занимается обновлением статусов посылок
 	Checker(wg *sync.WaitGroup, ch chan<- database.Submission)
 }

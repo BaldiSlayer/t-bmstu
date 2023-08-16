@@ -93,6 +93,13 @@ func CreateTables() error {
 		    admins TEXT[],
 		    invite_code TEXT
 		);
+
+		/*CREATE TABLE IF NOT EXISTS forum_posts (
+		    id SERIAL PRIMARY KEY,
+		    title TEXT,
+		    text TEXT,
+		    tags TEXT[]
+		)*/
     `)
 	if err != nil {
 		return err

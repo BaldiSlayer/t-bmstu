@@ -55,9 +55,14 @@ func (h *Handler) InitRoutes() *gin.Engine {
 			forum.GET("/", h.forumMainPage)
 		}
 
-		hw_iu9_bmstu := view.Group("/hw_iu9_bmstu")
+		profile := view.Group("/profile")
 		{
-			hw_iu9_bmstu.GET("/", h.hwIu9MainPage)
+			profile.GET("/", h.profileMainPage)
+		}
+
+		hwIu9Bmstu := view.Group("/hw_iu9_bmstu")
+		{
+			hwIu9Bmstu.GET("/", h.hwIu9MainPage)
 		}
 
 		view.GET("/timus", h.timusTaskList)
