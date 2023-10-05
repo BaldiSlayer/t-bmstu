@@ -1,0 +1,75 @@
+{
+  "cookies": {
+    "codeforces.com": {
+      "codeforces.com;/;39ce7": {
+        "Name": "39ce7",
+        "Value": "CFemoGS6",
+        "Domain": "codeforces.com",
+        "Path": "/",
+        "SameSite": "",
+        "Secure": false,
+        "HttpOnly": false,
+        "Persistent": true,
+        "HostOnly": true,
+        "Expires": "2023-04-03T08:21:38.4838842+03:00",
+        "Creation": "2023-03-22T18:34:58.4838842+03:00",
+        "LastAccess": "2023-03-23T21:26:22.9496648+03:00"
+      },
+      "codeforces.com;/;JSESSIONID": {
+        "Name": "JSESSIONID",
+        "Value": "E21995C44DAF076A2448CAB68E0DFFEA-n1",
+        "Domain": "codeforces.com",
+        "Path": "/",
+        "SameSite": "",
+        "Secure": false,
+        "HttpOnly": true,
+        "Persistent": false,
+        "HostOnly": true,
+        "Expires": "9999-12-31T23:59:59Z",
+        "Creation": "2023-03-22T18:34:58.4838842+03:00",
+        "LastAccess": "2023-03-23T21:26:22.9496648+03:00"
+      },
+      "codeforces.com;/;X-User": {
+        "Name": "X-User",
+        "Value": "37115694c7ed3d4f3fdab06e5c1165044ad2c40d4bc88196fe23f74e2a76848ca83c1dc96684a8de",
+        "Domain": "codeforces.com",
+        "Path": "/",
+        "SameSite": "",
+        "Secure": false,
+        "HttpOnly": false,
+        "Persistent": true,
+        "HostOnly": true,
+        "Expires": "2023-04-21T18:34:58.6063052+03:00",
+        "Creation": "2023-03-22T18:34:58.6063052+03:00",
+        "LastAccess": "2023-03-23T21:26:22.9496648+03:00"
+      },
+      "codeforces.com;/;X-User-Sha1": {
+        "Name": "X-User-Sha1",
+        "Value": "635d38cbc647d976b751845ac1b4c8bac00968fb",
+        "Domain": "codeforces.com",
+        "Path": "/",
+        "SameSite": "",
+        "Secure": false,
+        "HttpOnly": false,
+        "Persistent": true,
+        "HostOnly": true,
+        "Expires": "2024-03-21T18:34:58.6063052+03:00",
+        "Creation": "2023-03-22T18:34:58.6063052+03:00",
+        "LastAccess": "2023-03-23T21:26:22.9496648+03:00"
+      }
+    }
+  },
+  "handle": "angelic_hedgehog",
+  "handle_or_email": "serj_1313@mail.ru",
+  "password": "e56bf97266259f6a252a253e6c9d38034df472e1da082208823088428515b1cc69385a5e21f0662296b131517eb79987c45b74a1ec507e006877cbb17ee88c86f612e1f67021c35bf7da0679968a",
+  "ftaa": "fpllngzieyoh43e013",
+  "bfaa": "f1b3f18c715565b589b7823cda7448ce",
+  "last_submission": {
+    "problem_type": "contest",
+    "contest_id": "896",
+    "group_id": "",
+    "problem_id": "B",
+    "submission_id": "198847560",
+    "RootPath": ""
+  }
+}

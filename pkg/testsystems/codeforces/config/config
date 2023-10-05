@@ -1,0 +1,27 @@
+{
+  "template": [
+    {
+      "alias": "py",
+      "lang": "31",
+      "path": "template.py",
+      "suffix": [
+        "",
+        "py"
+      ],
+      "before_script": "",
+      "script": "python3 $%full%$",
+      "after_script": ""
+    }
+  ],
+  "default": 0,
+  "gen_after_parse": false,
+  "host": "https://codeforces.com",
+  "proxy": "",
+  "folder_name": {
+    "acmsguru": "acmsguru",
+    "contest": "contest",
+    "group": "group",
+    "gym": "gym",
+    "root": "cf"
+  }
+}
