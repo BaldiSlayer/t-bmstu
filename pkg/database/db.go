@@ -57,7 +57,9 @@ func CreateTables() error {
             participants JSONB,
             results JSONB,
             tasks JSONB,
-            group_owner INTEGER
+            group_owner INTEGER,
+            start_time TIMESTAMP,
+    		duration INTERVAL
         );
 
         CREATE TABLE IF NOT EXISTS tasks (

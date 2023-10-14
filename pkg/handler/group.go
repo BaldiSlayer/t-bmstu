@@ -1,10 +1,12 @@
 package handler
 
 import (
+	"fmt"
 	"github.com/Baldislayer/t-bmstu/pkg/database"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 func (h *Handler) getGroupContests(c *gin.Context) {
@@ -21,8 +23,38 @@ func (h *Handler) getGroupContests(c *gin.Context) {
 		return
 	}
 
+	type Contest struct {
+		Title    string `json:"title"`
+		ID       int
+		TimeLeft string `json:"timeleft"`
+	}
+
+	// костыль
+	currentTime := time.Now().Add(3 * time.Hour)
+	var s string
+	contestsForTemplate := []Contest{}
+	for _, contest := range contests {
+		endTime := contest.StartTime.Add(contest.Duration).In(currentTime.Location())
+		var timeRemaining time.Duration
+		if currentTime.Before(endTime) {
+			timeRemaining = endTime.Sub(currentTime)
+			hours := int(timeRemaining.Hours())
+			minutes := int(timeRemaining.Minutes()) % 60
+			seconds := int(timeRemaining.Seconds()) % 60
+			s = fmt.Sprintf("%02d:%02d:%02d", hours, minutes, seconds)
+		} else {
+			s = ""
+		}
+		fmt.Println(s)
+		contestsForTemplate = append(contestsForTemplate, Contest{
+			Title:    contest.Title,
+			ID:       contest.ID,
+			TimeLeft: s,
+		})
+	}
+
 	c.HTML(http.StatusOK, "group_contests.tmpl", gin.H{
-		"Contests": contests,
+		"Contests": contestsForTemplate,
 	})
 }
 
@@ -48,5 +80,3 @@ func (h *Handler) checkInvite(c *gin.Context) {
 	database.AddUserToGroup(c.GetString("username"), groupId, "student")
 	c.JSON(http.StatusOK, gin.H{"Success": "U are member of this group now"})
 }
-
-//

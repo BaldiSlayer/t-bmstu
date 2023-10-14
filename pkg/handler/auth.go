@@ -18,8 +18,8 @@ import (
 )
 
 const (
-	clientID       = "e5f257f8b08516d4da8f"
-	clientSecret   = "26a51b3240af0d236f6e2c004842b9b2a85095c8"
+	clientID       = ""
+	clientSecret   = ""
 	redirectURL    = "http://localhost:8080/auth/callback"
 	sessionName    = "mysession"
 	accessTokenKey = "access_token"

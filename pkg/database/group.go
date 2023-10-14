@@ -91,7 +91,7 @@ func GetGroupContests(groupOwner int) ([]Contest, error) {
 	defer conn.Close(context.Background())
 
 	rows, err := conn.Query(context.Background(), `
-		SELECT id, title, access, participants, results, tasks, group_owner
+		SELECT id, title, access, participants, results, tasks, group_owner, start_time, duration
 		FROM contests
 		WHERE group_owner = $1
 	`, groupOwner)
@@ -103,7 +103,8 @@ func GetGroupContests(groupOwner int) ([]Contest, error) {
 	var contests []Contest
 	for rows.Next() {
 		var contest Contest
-		if err := rows.Scan(&contest.ID, &contest.Title, &contest.Access, &contest.Participants, &contest.Results, &contest.Tasks, &contest.GroupOwner); err != nil {
+		if err := rows.Scan(&contest.ID, &contest.Title, &contest.Access, &contest.Participants, &contest.Results, &contest.Tasks, &contest.GroupOwner,
+			&contest.StartTime, &contest.Duration); err != nil {
 			return nil, err
 		}
 		contests = append(contests, contest)
