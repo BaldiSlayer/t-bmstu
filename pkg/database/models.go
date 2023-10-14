@@ -1,6 +1,9 @@
 package database
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"time"
+)
 
 type Submission struct {
 	ID               int    `json:"id"`
@@ -28,6 +31,8 @@ type Contest struct {
 	Results      map[string]interface{} `json:"results"`
 	Tasks        map[string]interface{} `json:"tasks"`
 	GroupOwner   int                    `json:"group_owner"`
+	StartTime    time.Time              `json:"start_time"`
+	Duration     time.Duration          `json:"duration"`
 }
 
 type Task struct {

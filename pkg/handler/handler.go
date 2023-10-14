@@ -48,6 +48,8 @@ func (h *Handler) InitRoutes() *gin.Engine {
 	view := router.Group("/view")
 	view.Use(authMiddleware())
 	{
+		view.GET("/kostyl", h.addContest)
+
 		view.GET("/home", h.home)
 
 		forum := view.Group("/forum")
