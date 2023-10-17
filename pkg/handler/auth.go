@@ -224,6 +224,8 @@ func (h *Handler) signUp(c *gin.Context) {
 				SolvedTasks:  []string{},
 				Groups:       []json.RawMessage{},
 			})
+
+			c.Redirect(302, "/auth/login")
 		}
 	default:
 		{

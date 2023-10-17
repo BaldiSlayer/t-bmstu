@@ -14,6 +14,8 @@ import (
 	"strings"
 )
 
+var tasks []Task
+
 func getMiddle(start *goquery.Selection, end string) string {
 	if start == nil {
 		return ""
@@ -156,21 +158,18 @@ func constructURL(id string, count int) string {
 	return fmt.Sprintf("https://acm.timus.ru/status.aspx?space=1&count=%d&from=%s", count, id)
 }
 
-func GetTaskList(count int) ([]Task, error) {
+func GetTaskList(from int, count int) ([]Task, error) {
 	doc, err := goquery.NewDocument("https://acm.timus.ru/problemset.aspx?space=1&page=all&locale=ru")
 	if err != nil {
 		return nil, err
 	}
 
-	var tasks []Task
-
-	// Найти таблицу по классу и выполнить парсинг строк
-	doc.Find("table.problemset tr.content").Each(func(i int, s *goquery.Selection) {
-		if i < count {
+	if len(tasks) == 0 {
+		// Найти таблицу по классу и выполнить парсинг строк
+		doc.Find("table.problemset tr.content").Each(func(i int, s *goquery.Selection) {
 			id := s.Find("td").Eq(1).Text()
 			name := s.Find("td.name a").Text()
 
-			// Если name содержит перенос строки, уберите его с помощью strings.TrimSpace
 			name = strings.TrimSpace(name)
 
 			if id != "" && name != "" {
@@ -180,10 +179,10 @@ func GetTaskList(count int) ([]Task, error) {
 					Name: name,
 				})
 			}
-		}
-	})
+		})
+	}
 
-	return tasks, nil
+	return tasks[from-1 : from+count], nil
 }
 
 func endChecking(verdict string) bool {

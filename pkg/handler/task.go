@@ -16,11 +16,26 @@ func (h *Handler) timusTaskList(c *gin.Context) {
 		parsedCount = 15
 	}
 
-	if parsedCount > 50 {
-		parsedCount = 50
+	if parsedCount > 50 || parsedCount <= 0 {
+		parsedCount = 20
 	}
 
-	taskList, err := timus.GetTaskList(parsedCount)
+	from := c.Query("from")
+
+	parsedFrom, err := strconv.Atoi(from)
+	if err != nil {
+		parsedFrom = 1
+	}
+
+	if parsedFrom > 50 {
+		parsedFrom = 20
+	}
+
+	if parsedFrom <= 0 {
+		parsedFrom = 1
+	}
+
+	taskList, err := timus.GetTaskList(parsedFrom, parsedCount)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, "bad req")
