@@ -48,6 +48,10 @@
             color: #777;
         }
 
+        .dark-mode .name {
+            color: #f8fbff !important;
+        }
+
     </style>
 
 </head>
@@ -107,13 +111,13 @@
 
 
         <div id="content" class="collapsed">
-            <img class="profile-image" src="https://avatars.githubusercontent.com/u/77489413?v=4    " alt="Profile Photo">
+            <img class="profile-image" src="https://avatars.githubusercontent.com/u/77489413?v=4" alt="Profile Photo">
 
             <div class="profile-details">
-                <div class="nickname">@Никнейм</div>
-                <div class="name">Фамилия</div>
-                <div class="name">Имя</div>
-                <div class="email">example@example.com</div>
+                <div class="nickname">@{{.NickName}}</div>
+                <div class="name">{{.Surname}}</div>
+                <div class="name">{{.Name}}</div>
+                <div class="email">{{.Email}}</div>
             </div>
         </div>
     </div>

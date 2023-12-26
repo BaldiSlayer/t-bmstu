@@ -4,22 +4,23 @@ import (
 	"context"
 	"fmt"
 	"github.com/jackc/pgx/v4"
-	"github.com/spf13/viper"
 )
 
 var (
 	DbURL = ""
 )
 
-func CreateTables() error {
+func CreateTables(dbUsername, dbPassword, dbHost, dbName string) error {
 	// TODO миграции
 
 	DbURL = fmt.Sprintf(
-		"postgresql://%s:%s@localhost:5432/%s",
-		viper.GetString("DBUsername"),
-		viper.GetString("DBPassword"),
-		viper.GetString("DBName"),
+		"postgresql://%s:%s@%s:5432/%s",
+		dbUsername,
+		dbPassword,
+		dbHost,
+		dbName,
 	)
+
 	conn, err := pgx.Connect(context.Background(), DbURL)
 	if err != nil {
 		return err

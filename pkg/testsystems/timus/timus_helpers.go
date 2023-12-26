@@ -164,6 +164,7 @@ func GetTaskList(from int, count int) ([]Task, error) {
 		return nil, err
 	}
 
+	fmt.Println(from, count)
 	if len(tasks) == 0 {
 		// Найти таблицу по классу и выполнить парсинг строк
 		doc.Find("table.problemset tr.content").Each(func(i int, s *goquery.Selection) {
@@ -182,7 +183,7 @@ func GetTaskList(from int, count int) ([]Task, error) {
 		})
 	}
 
-	return tasks[from-1 : from+count], nil
+	return tasks[from-1 : from+count-1], nil
 }
 
 func endChecking(verdict string) bool {

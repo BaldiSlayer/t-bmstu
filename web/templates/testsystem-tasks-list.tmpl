@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Группы</title>
+    <title>Timus</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <link href="/styles/base.css?hash=v866df8" rel="stylesheet">
@@ -72,7 +72,6 @@
         <div id="content" class="collapsed">
             <h1 class="simple-text">Задачи c {{.TestSystem}}</h1>
             <div id="task-list" class="mt-4">
-
                 {{range .Tasks}}
                 <div class="card task-card mt-2 mb-2" onclick="redirectToTask('{{.ID}}');">
                     <div class="card-body">
@@ -81,7 +80,11 @@
                     </div>
                 </div>
                 {{end}}
+            </div>
 
+            <div class="text-center mt-4">
+                <button class="btn btn-primary mr-2" onclick="goBack()">Назад</button>
+                <button class="btn btn-primary" onclick="goForward()">Вперед</button>
             </div>
         </div>
 
@@ -93,6 +96,45 @@
     function redirectToTask(taskId) {
         window.location.href = "/view/problem/" + taskId;
     }
+
+    function goBack() {
+        const url = new URL(window.location.href);
+
+        let from = parseInt(url.searchParams.get("from"));
+        let count = parseInt(url.searchParams.get("count"));
+
+        if (isNaN(from)) {
+            from = 1
+        }
+
+        if (isNaN(count)) {
+            count = 20
+            url.searchParams.set("count", count);
+        }
+
+        url.searchParams.set("from", from - count);
+        window.location.href = url.toString();
+    }
+
+    function goForward() {
+        const url = new URL(window.location.href);
+
+        let from = parseInt(url.searchParams.get("from"));
+        let count = parseInt(url.searchParams.get("count"));
+
+        if (isNaN(from)) {
+            from = 1
+        }
+
+        if (isNaN(count)) {
+            count = 20
+            url.searchParams.set("count", count);
+        }
+
+        url.searchParams.set("from", from + count);
+        window.location.href = url.toString();
+    }
+
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/scripts/base.js?hash=1fs2"></script>

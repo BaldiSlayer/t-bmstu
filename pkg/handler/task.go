@@ -27,10 +27,6 @@ func (h *Handler) timusTaskList(c *gin.Context) {
 		parsedFrom = 1
 	}
 
-	if parsedFrom > 50 {
-		parsedFrom = 20
-	}
-
 	if parsedFrom <= 0 {
 		parsedFrom = 1
 	}

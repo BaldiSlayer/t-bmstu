@@ -46,8 +46,30 @@ var (
 		Scopes:       []string{"user:email"},
 		Endpoint:     github.Endpoint,
 	}
+	// TODO to config
 	jwtSecret = "your-secret-key"
 )
+
+func isAuth(c *gin.Context) bool {
+	cookie, err := c.Cookie("token")
+	if err != nil {
+		return false
+	}
+
+	token, err := jwt.Parse(cookie, func(token *jwt.Token) (interface{}, error) {
+		return []byte(jwtSecret), nil
+	})
+	if err != nil || !token.Valid {
+		return false
+	}
+
+	_, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return false
+	}
+
+	return true
+}
 
 func authMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -113,6 +135,12 @@ func generateToken(username string, role string) (string, error) {
 }
 
 func (h *Handler) signIn(c *gin.Context) {
+	// проверить авторизован ли уже пользователь
+	if isAuth(c) {
+		c.Redirect(http.StatusSeeOther, "/view/home")
+		c.Abort()
+	}
+
 	requestMethod := c.Request.Method
 	switch requestMethod {
 	case "GET":
