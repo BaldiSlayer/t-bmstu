@@ -138,6 +138,7 @@ func GetSubmitsWithStatus(testsystem string, status int) ([]Submission, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer conn.Close(context.Background())
 
 	query := `
 		SELECT id, sender_login, task_id, testing_system, code, submission_time, contest_id,
