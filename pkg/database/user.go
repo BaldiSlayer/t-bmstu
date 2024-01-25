@@ -190,3 +190,26 @@ func GetUserGroups(username string) ([]Group, error) {
 
 	return groups, nil
 }
+
+type Profile struct {
+	Username  string
+	LastName  string
+	FirstName string
+	Email     string
+}
+
+func GetInfoForProfilePage(username string) (User, error) {
+	conn, err := pgx.Connect(context.Background(), DbURL)
+	if err != nil {
+		return User{}, fmt.Errorf("unable to connect to database: %v", err)
+	}
+	defer conn.Close(context.Background())
+
+	var user User
+	err = conn.QueryRow(context.Background(), "SELECT username, last_name, first_name, email FROM users WHERE username = $1", username).Scan(&user.Username, &user.LastName, &user.FirstName, &user.Email)
+	if err != nil {
+		return User{}, fmt.Errorf("query execution failed: %v", err)
+	}
+
+	return user, nil
+}

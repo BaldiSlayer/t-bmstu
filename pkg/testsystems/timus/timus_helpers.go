@@ -127,6 +127,12 @@ func Submit(judgeId string, accountName string, submission database.Submission) 
 
 	// Вывод тела ответа в консоль
 	htmlContent := string(body)
+
+	// ошибка не знаем такой язык
+	if strings.Contains(htmlContent, "Unknown language") {
+		// значит надо идти парсить
+	}
+
 	doc, err := goquery.NewDocumentFromReader(strings.NewReader(htmlContent))
 	if err != nil {
 		return "-1", err
@@ -164,7 +170,6 @@ func GetTaskList(from int, count int) ([]Task, error) {
 		return nil, err
 	}
 
-	fmt.Println(from, count)
 	if len(tasks) == 0 {
 		// Найти таблицу по классу и выполнить парсинг строк
 		doc.Find("table.problemset tr.content").Each(func(i int, s *goquery.Selection) {
