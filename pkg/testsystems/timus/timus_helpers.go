@@ -3,14 +3,10 @@ package timus
 import (
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"github.com/Baldislayer/t-bmstu/pkg/database"
 	"github.com/PuerkitoBio/goquery"
-	"io/ioutil"
 	"log"
 	"net/http"
-	"net/url"
 	"strings"
 )
 
@@ -68,98 +64,6 @@ func parseTableToJSON(table *goquery.Selection) string {
 	return string(jsonTests)
 }
 
-// Submit - функция, которая отправляет посылку
-func Submit(judgeId string, accountName string, submission database.Submission) (string, error) {
-	d := map[string]string{
-		"FreePascal 2.6":      "31",
-		"Visual C 2019":       "63",
-		"Visual C++ 2019":     "64",
-		"Visual C 2019 x64":   "65",
-		"Visual C++ 2019 x64": "66",
-		"GCC 9.2 x64":         "67",
-		"G++ 9.2 x64":         "68",
-		"Clang++ 10 x64":      "69",
-		"Java 1.8":            "32",
-		"Visual C# 2019":      "61",
-		"Python 3.8 x64":      "57",
-		"PyPy 3.8 x64":        "71",
-		"Go 1.14 x64":         "58",
-		"Ruby 1.9":            "18",
-		"Haskell 7.6":         "19",
-		"Scala 2.11":          "33",
-		"Rust 1.58 x64":       "72",
-		"Kotlin 1.4.0":        "60",
-	}
-
-	url_ := "https://acm.timus.ru/submit.aspx"
-
-	val, exist := d[submission.Language]
-
-	if !exist {
-		return "-1", errors.New("No such language")
-	}
-
-	r := url.Values{
-		"action":     {"submit"},
-		"SpaceID":    {"1"},
-		"JudgeID":    {judgeId},
-		"Language":   {val},
-		"ProblemNum": {submission.TaskID},
-		"Source":     {string(submission.Code)},
-	}
-
-	resp, err := http.PostForm(url_, r)
-
-	if err != nil {
-		return "-1", err
-	}
-
-	// TODO научиться проверять есть ли ошибка на самом тимусе
-
-	defer resp.Body.Close()
-
-	// Чтение тела ответа
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("Error reading response body:", err)
-		return "-1", err
-	}
-
-	// Вывод тела ответа в консоль
-	htmlContent := string(body)
-
-	// ошибка не знаем такой язык
-	if strings.Contains(htmlContent, "Unknown language") {
-		// значит надо идти парсить
-	}
-
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(htmlContent))
-	if err != nil {
-		return "-1", err
-	}
-
-	taskID := submission.TaskID
-
-	foundedId := "-1"
-
-	doc.Find("table.status.status_nofilter tr").Each(func(i int, row *goquery.Selection) {
-		if foundedId == "-1" {
-
-			idValue := row.Find("td.id").Text()
-			coderValue := row.Find("td.coder a").Text()
-			problemValue := row.Find("td.problem a").Text()
-
-			problemValue = strings.Split(problemValue, ".")[0]
-
-			if coderValue == accountName && problemValue == taskID {
-				foundedId = idValue
-			}
-		}
-	})
-
-	return foundedId, nil
-}
-
 func constructURL(id string, count int) string {
 	return fmt.Sprintf("https://acm.timus.ru/status.aspx?space=1&count=%d&from=%s", count, id)
 }
@@ -198,4 +102,28 @@ func endChecking(verdict string) bool {
 		return true
 	}
 	return false
+}
+
+func parseLanguages() (map[string]string, error) {
+	resp, err := http.Get("https://acm.timus.ru/submit.aspx")
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	languages := make(map[string]string)
+	doc.Find("select[name='Language']").Find("option").Each(func(i int, s *goquery.Selection) {
+		value, _ := s.Attr("value")
+		text := s.Text()
+		if value != "" && text != "" {
+			languages[text] = value
+		}
+	})
+
+	return languages, nil
 }

@@ -1,10 +1,16 @@
 package timus
 
 import (
+	"errors"
 	"fmt"
 	"github.com/Baldislayer/t-bmstu/pkg/database"
 	"github.com/PuerkitoBio/goquery"
+	"github.com/texttheater/golang-levenshtein/levenshtein"
+	"io/ioutil"
 	"log"
+	"net/http"
+	"net/url"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -16,7 +22,17 @@ type Task struct {
 }
 
 type Timus struct {
-	Name string
+	Name           string
+	m              sync.RWMutex
+	LanguagesMap   map[string]string
+	LanguagesSlice []string
+}
+
+func (t *Timus) Init() {
+	err := t.SetLanguages()
+	if err != nil {
+		log.Fatal("TImus init failed")
+	}
 }
 
 func (t *Timus) GetName() string {
@@ -24,29 +40,10 @@ func (t *Timus) GetName() string {
 }
 
 func (t *Timus) CheckLanguage(language string) bool {
-	languagesDict := map[string]struct{}{
-		"FreePascal 2.6":      struct{}{},
-		"Visual C 2019":       struct{}{},
-		"Visual C++ 2019":     struct{}{},
-		"Visual C 2019 x64":   struct{}{},
-		"Visual C++ 2019 x64": struct{}{},
-		"GCC 9.2 x64":         struct{}{},
-		"G++ 9.2 x64":         struct{}{},
-		"Clang++ 10 x64":      struct{}{},
-		"Java 1.8":            struct{}{},
-		"Visual C# 2019":      struct{}{},
-		"Python 3.8 x64":      struct{}{},
-		"PyPy 3.8 x64":        struct{}{},
-		"Go 1.14 x64":         struct{}{},
-		"Ruby 1.9":            struct{}{},
-		"Haskell 7.6":         struct{}{},
-		"Scala 2.11":          struct{}{},
-		"Rust 1.58 x64":       struct{}{},
-		"Kotlin 1.4.0":        struct{}{},
-	}
+	t.m.RLock()
+	defer t.m.RUnlock()
 
-	_, exist := languagesDict[language]
-
+	_, exist := t.LanguagesMap[language]
 	if !exist {
 		return false
 	}
@@ -55,25 +52,10 @@ func (t *Timus) CheckLanguage(language string) bool {
 }
 
 func (t *Timus) GetLanguages() []string {
-	return []string{"FreePascal 2.6",
-		"Visual C 2019",
-		"Visual C++ 2019",
-		"Visual C 2019 x64",
-		"Visual C++ 2019 x64",
-		"GCC 9.2 x64",
-		"G++ 9.2 x64",
-		"Clang++ 10 x64",
-		"Java 1.8",
-		"Visual C# 2019",
-		"Python 3.8 x64",
-		"PyPy 3.8 x64",
-		"Go 1.14 x64",
-		"Ruby 1.9",
-		"Haskell 7.6",
-		"Scala 2.11",
-		"Rust 1.58 x64",
-		"Kotlin 1.4.0",
-	}
+	t.m.RLock()
+	defer t.m.RUnlock()
+
+	return t.LanguagesSlice
 }
 
 func (t *Timus) GetProblem(taskID string) (database.Task, error) {
@@ -176,11 +158,12 @@ func (t *Timus) Submitter(wg *sync.WaitGroup, ch chan<- database.Submission) {
 			// перебираем аккаунты
 			for i, account := range accounts {
 				if elapsedTime := time.Now().Sub(account.UsageTime); elapsedTime > timeDifference {
-					id, err := Submit(account.JudgeID, account.Name, submission)
+					id, err := t.Submit(account.JudgeID, account.Name, submission)
 					if err != nil {
 						fmt.Println(err)
 						// скипаем эту посылку
 						// подумать, может ее и удалить еще?
+						// было бы круто наверное кидать ее в конец очереди, но мне чет лень это писать
 						continue
 					}
 
@@ -279,4 +262,122 @@ func (t *Timus) Checker(wg *sync.WaitGroup, ch chan<- database.Submission) {
 
 		time.Sleep(time.Second)
 	}
+}
+
+// Submit - функция, которая отправляет посылку
+func (t *Timus) Submit(judgeId string, accountName string, submission database.Submission) (string, error) {
+	url_ := "https://acm.timus.ru/submit.aspx"
+
+	t.m.RLock()
+	val, exist := t.LanguagesMap[submission.Language]
+	t.m.RUnlock()
+
+	if !exist {
+		return "-1", errors.New("No such language")
+	}
+
+	resp, err := http.PostForm(url_, url.Values{
+		"action":     {"submit"},
+		"SpaceID":    {"1"},
+		"JudgeID":    {judgeId},
+		"Language":   {val},
+		"ProblemNum": {submission.TaskID},
+		"Source":     {string(submission.Code)},
+	})
+
+	if err != nil {
+		return "-1", err
+	}
+
+	// TODO научиться проверять есть ли ошибка на самом тимусе
+
+	defer resp.Body.Close()
+
+	// Чтение тела ответа
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading response body:", err)
+		return "-1", err
+	}
+
+	// Вывод тела ответа в консоль
+	htmlContent := string(body)
+
+	// ошибка не знаем такой язык
+	if strings.Contains(htmlContent, "Unknown language") {
+		// значит надо идти парсить
+		t.SetLanguages()
+
+		// теперь надо расстоянием Левенштейна найти наиболее похожее
+		t.m.RLock()
+		nearestLanguage := getNearest(submission.Language, t.LanguagesSlice)
+		t.m.RUnlock()
+
+		submission.Language = nearestLanguage
+		// надо пойти в базу данных и поменять язык
+
+		return t.Submit(judgeId, accountName, submission)
+	}
+
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(htmlContent))
+	if err != nil {
+		return "-1", err
+	}
+
+	taskID := submission.TaskID
+
+	foundedId := "-1"
+
+	doc.Find("table.status.status_nofilter tr").Each(func(i int, row *goquery.Selection) {
+		if foundedId == "-1" {
+
+			idValue := row.Find("td.id").Text()
+			coderValue := row.Find("td.coder a").Text()
+			problemValue := row.Find("td.problem a").Text()
+
+			problemValue = strings.Split(problemValue, ".")[0]
+
+			if coderValue == accountName && problemValue == taskID {
+				foundedId = idValue
+			}
+		}
+	})
+
+	return foundedId, nil
+}
+
+// SetLanguages - устанавливает поля LanguagesMap и LanguagesSlice
+// структуры Timus
+func (t *Timus) SetLanguages() error {
+	languages, err := parseLanguages()
+	if err != nil {
+		return err
+	}
+
+	t.m.Lock()
+	defer t.m.Unlock()
+	t.LanguagesMap = languages
+
+	t.LanguagesSlice = nil
+	for elem := range languages {
+		t.LanguagesSlice = append(t.LanguagesSlice, elem)
+	}
+	sort.Strings(t.LanguagesSlice)
+
+	return nil
+}
+
+func getNearest(language string, languages []string) string {
+	minDistance := 10000
+	nearestLanguage := ""
+
+	for _, lang := range languages {
+		distance := levenshtein.DistanceForStrings([]rune(language), []rune(lang), levenshtein.DefaultOptions)
+		if distance < minDistance {
+			minDistance = distance
+			nearestLanguage = lang
+		}
+	}
+
+	return nearestLanguage
 }

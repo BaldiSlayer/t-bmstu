@@ -225,3 +225,19 @@ func UpdateSubmissionData(submission Submission) error {
 
 	return nil
 }
+
+func GetSubmissionCode(id int) (string, error) {
+	conn, err := pgx.Connect(context.Background(), DbURL)
+	if err != nil {
+		return "", err
+	}
+	defer conn.Close(context.Background())
+
+	var submission Submission
+	err = conn.QueryRow(context.Background(), "SELECT Code FROM submissions WHERE id = $1", id).Scan(&submission.Code)
+	if err != nil {
+		return "", fmt.Errorf("query execution failed: %v", err)
+	}
+
+	return string(submission.Code), nil
+}

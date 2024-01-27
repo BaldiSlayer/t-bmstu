@@ -17,6 +17,10 @@ type ACMP struct {
 	Name string
 }
 
+func (t *ACMP) Init() {
+
+}
+
 func (t *ACMP) GetName() string {
 	return t.Name
 }

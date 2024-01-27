@@ -45,6 +45,7 @@ function updateTable(data) {
         <td>${data.test}</td>
         <td>${data.execution_time}</td>
         <td>${data.memory_used}</td>
+        <td><a href="/view/submission/${data.id}">тык</a></td>
     `;
 
     // Проверка наличия строки с таким id

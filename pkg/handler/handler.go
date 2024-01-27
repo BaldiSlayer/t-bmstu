@@ -57,6 +57,8 @@ func (h *Handler) InitRoutes() *gin.Engine {
 			forum.GET("/", h.forumMainPage)
 		}
 
+		view.GET("submission/:id", h.getSumbissionCode)
+
 		profile := view.Group("/profile")
 		{
 			profile.GET("/", h.profileMainPage)

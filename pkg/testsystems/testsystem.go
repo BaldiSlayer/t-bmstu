@@ -17,6 +17,7 @@ var AllowedTestsystems = []TestSystem{
 
 // TestSystem - это интерфейс класса тестирующей системы, то есть все тестирующие системы должны обладать этими функциями
 type TestSystem interface {
+	Init()
 	// GetName - получить имя тестирущей системы
 	GetName() string
 	// CheckLanguage - проверяет, существует ли у данной тестирующей системы такой язык программирования
@@ -43,6 +44,9 @@ func InitGorutines() error {
 
 		ch2 := make(chan database.Submission)
 		checkerChannels[TestSystem.GetName()] = ch2
+
+		// инициализация
+		TestSystem.Init()
 
 		wg.Add(2)
 
