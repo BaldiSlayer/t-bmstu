@@ -2,9 +2,10 @@ services:
   web:
     build: .
     ports:
-      - "8080:8080"
+      - "5332:8080"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       - APP_PORT=${APP_PORT}
       - DB_USER=${DB_USER}
@@ -20,5 +21,10 @@ services:
       POSTGRES_DB: ${DB_NAME}
     volumes:
       - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 volumes:
   db-data:
