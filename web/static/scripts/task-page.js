@@ -122,6 +122,7 @@ function sendRequest() {
 
     if (document.getElementById('dropdownMenuButton').innerText === 'Select an language ') {
         alert("Выбери язык программирования!")
+        return
     }
 
     fetch(apiUrl, {

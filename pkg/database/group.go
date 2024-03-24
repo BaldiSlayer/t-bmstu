@@ -7,6 +7,25 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
+func CheckGroupExist(title string, inviteCode string) (bool, error) {
+	conn, err := pgx.Connect(context.Background(), DbURL)
+	if err != nil {
+		return false, fmt.Errorf("failed to connect to database: %w", err)
+	}
+	defer conn.Close(context.Background())
+
+	var count int
+	err = conn.QueryRow(context.Background(),
+		"SELECT COUNT(*) FROM groups WHERE title = $1 OR invite_code = $2", title, inviteCode).
+		Scan(&count)
+
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
 func AddGroupWithMembers(group Group, memberUsernames []json.RawMessage) error {
 	conn, err := pgx.Connect(context.Background(), DbURL)
 	if err != nil {
@@ -21,8 +40,8 @@ func AddGroupWithMembers(group Group, memberUsernames []json.RawMessage) error {
 	}
 
 	// Вставка новой группы в таблицу groups
-	err = tx.QueryRow(context.Background(), "INSERT INTO groups (title, students, teachers, admins) VALUES ($1, $2, $3, $4) RETURNING id",
-		group.Title, group.Students, group.Teachers, group.Admins).Scan(&group.ID)
+	err = tx.QueryRow(context.Background(), "INSERT INTO groups (title, students, teachers, admins, invite_code) VALUES ($1, $2, $3, $4, $5) RETURNING id",
+		group.Title, group.Students, group.Teachers, group.Admins, group.InviteCode).Scan(&group.ID)
 	if err != nil {
 		tx.Rollback(context.Background())
 		return fmt.Errorf("failed to insert new group: %w", err)

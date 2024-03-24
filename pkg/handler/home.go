@@ -22,7 +22,17 @@ func (h *Handler) add(c *gin.Context) {
 }
 
 func (h *Handler) home(c *gin.Context) {
-	c.HTML(http.StatusOK, "home.tmpl", gin.H{})
+	switch c.GetString("role") {
+	case "student":
+		{
+			c.HTML(http.StatusOK, "home.tmpl", gin.H{})
+		}
+	case "admin":
+		{
+			c.HTML(http.StatusOK, "home-admin.tmpl", gin.H{})
+		}
+	}
+
 }
 
 func (h *Handler) addContest(c *gin.Context) {

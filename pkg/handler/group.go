@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/Baldislayer/t-bmstu/pkg/database"
 	"github.com/gin-gonic/gin"
@@ -8,6 +9,46 @@ import (
 	"strconv"
 	"time"
 )
+
+func (h *Handler) createGroup(c *gin.Context) {
+	switch c.Request.Method {
+	case "GET":
+		{
+			c.HTML(http.StatusOK, "create-group.tmpl", gin.H{})
+		}
+	case "POST":
+		{
+			var requestData struct {
+				GroupName  string `json:"groupName"`
+				InviteLink string `json:"inviteLink"`
+			}
+
+			if err := c.ShouldBindJSON(&requestData); err != nil {
+				c.Status(http.StatusBadRequest)
+				return
+			}
+
+			exist, err := database.CheckGroupExist(requestData.GroupName, requestData.InviteLink)
+			if err != nil {
+				c.Status(http.StatusBadRequest)
+				return
+			}
+
+			if exist {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "such group exists"})
+				return
+			}
+
+			database.AddGroupWithMembers(database.Group{
+				Title:      requestData.GroupName,
+				InviteCode: []byte(requestData.InviteLink),
+			},
+				[]json.RawMessage{})
+
+			c.Status(http.StatusOK)
+		}
+	}
+}
 
 func (h *Handler) getGroupContests(c *gin.Context) {
 	groupId, err := strconv.Atoi(c.Param("group_id"))

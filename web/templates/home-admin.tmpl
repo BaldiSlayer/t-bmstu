@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Группы</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="/styles/base.css?hash=v86ads6df8" rel="stylesheet">
+    <link href="/styles/home.css?hash=v86ddfasdi6df8" rel="stylesheet">
+</head>
+
+<body>
+<div>
+    <div class="avatar-container">
+        <a href="/view/profile">
+            <img src="https://avatars.githubusercontent.com/u/77489413?v=4" alt="User Avatar" class="user-avatar">
+        </a>
+    </div>
+
+    <div id="main">
+        <nav id="sidebar" class="collapsed">
+            <a class="d-flex align-items-center text-decoration-none" onclick="toggleSidebar()">
+                <i class="bi bi-list icons simple-text"></i>
+            </a>
+
+            <a class="d-flex align-items-center  text-decoration-none theme-toggle-container" id="theme-toggle" onclick="toggleTheme()">
+                <span class="me-2 icons">
+                    <i class="bi bi-moon-fill simple-text"></i>
+                    <i class="bi bi-sun-fill simple-text d-none"></i>
+                </span>
+
+                <span class="sidebar-label simple-text">Ночь</span>
+            </a>
+
+            <div class="center-vertically">
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <a href="/view/home" class="d-flex align-items-center text-decoration-none">
+                            <span class="me-2 icons"><i class="bi bi-house-door simple-text"></i></span>
+                            <span class="sidebar-label simple-text">Home</span>
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="/view/hw_iu9_bmstu" class="d-flex align-items-center text-decoration-none">
+                            <span class="me-2 icons"><i class="bi bi-code-square simple-text"></i></span>
+                            <span class="sidebar-label simple-text">hw_iu9_bmstu</span>
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="/view/forum" class="d-flex align-items-center text-decoration-none">
+                            <span class="me-2 icons"><i class="bi bi-chat-left-dots simple-text"></i></span>
+                            <span class="sidebar-label simple-text">Форум</span>
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="/view/settings" class="d-flex align-items-center text-decoration-none">
+                            <span class="me-2 icons"><i class="bi bi-gear simple-text"></i></span>
+                            <span class="sidebar-label simple-text">Настройки</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <div id="content" class="collapsed">
+            <div class="card group-card mt-2 mb-2" onclick="location.href='/view/createContest';">
+                <div class="card-body">
+                    <h5 class="card-title blue-text" style="font-weight: bold;">Создать контест</h5>
+                    <p class="card-text simple-text">Тут можно создать контест</p>
+                </div>
+            </div>
+
+            <div class="card group-card mt-2 mb-2" onclick="location.href='/view/createGroup';">
+                <div class="card-body">
+                    <h5 class="card-title blue-text" style="font-weight: bold;">Создать группу</h5>
+                    <p class="card-text simple-text">Тут можно создать контест</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/scripts/base.js?hash=1fs2"></script>
+</body>
+
+</html>
