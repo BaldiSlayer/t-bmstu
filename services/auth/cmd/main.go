@@ -44,6 +44,8 @@ func main() {
 
 	pool, err := pgxpool.New(context.Background(), "")
 	if err != nil {
+		logger.Panic("failed to connect to the database", zap.Error(err))
+
 		return
 	}
 
@@ -54,11 +56,12 @@ func main() {
 
 	handler := adapter_http.NewAuthHandler(useCase, logger)
 
-	http.HandleFunc("/login", handler.Login)
+	http.HandleFunc("/auth/login", handler.Login)
+	http.HandleFunc("/auth/register", handler.Register)
 
-	logger.Info("auth service started on :8080...")
+	logger.Info("auth service started on :8081...")
 
-	err = http.ListenAndServe(":8080", nil)
+	err = http.ListenAndServe(":8081", nil)
 	if err != nil {
 		logger.Error("error while ListenAndServe", zap.Error(err))
 	}

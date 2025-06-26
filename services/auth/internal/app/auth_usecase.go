@@ -27,7 +27,7 @@ func NewAuthUseCase(userRepo domain.UserRepository, tokenManager TokenManager) *
 func (a *AuthUseCase) Login(ctx context.Context, username, password string) (string, error) {
 	user, err := a.userRepo.FindByUsername(ctx, username)
 	if err != nil {
-		return "", errors.New("user not found")
+		return "", fmt.Errorf("failed to retrieve user: %w", err)
 	}
 
 	if user.Password != password {

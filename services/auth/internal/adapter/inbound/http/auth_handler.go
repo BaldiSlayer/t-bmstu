@@ -21,6 +21,8 @@ func NewAuthHandler(uc *app.AuthUseCase, logger *zap.Logger) *AuthHandler {
 }
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
+	h.logger.Info("smth")
+
 	var req struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
