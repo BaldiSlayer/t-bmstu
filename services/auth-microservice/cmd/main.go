@@ -11,9 +11,12 @@ import (
 	"github.com/BaldiSlayer/t-bmstu/services/auth-microservice/internal/app"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"go.uber.org/zap"
 
 	adapter_http "github.com/BaldiSlayer/t-bmstu/services/auth-microservice/internal/adapter/inbound/http"
 )
+
+const jwtSecret = "super_secret"
 
 type JWTSigner struct {
 	secret []byte
@@ -34,17 +37,23 @@ func (j *JWTSigner) Generate(username, role string) (string, error) {
 }
 
 func main() {
-	pool, err := pgxpool.New(context.Background(), "")
+	logger, err := zap.NewProduction()
 	if err != nil {
 		os.Exit(1)
+	}
+	defer logger.Sync()
+
+	pool, err := pgxpool.New(context.Background(), "")
+	if err != nil {
+		return
 	}
 
 	userRepo := postgres.New(pool)
 
-	tokenManager := NewJWTSigner([]byte("super_secret"))
+	tokenManager := NewJWTSigner([]byte(jwtSecret))
 	useCase := app.NewAuthUseCase(userRepo, tokenManager)
 
-	handler := adapter_http.NewAuthHandler(useCase)
+	handler := adapter_http.NewAuthHandler(useCase, logger)
 
 	http.HandleFunc("/login", handler.Login)
 
