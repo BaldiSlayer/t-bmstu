@@ -3,7 +3,7 @@ package postgres
 import (
 	"context"
 
-	"github.com/BaldiSlayer/t-bmstu/services/auth-microservice/internal/domain"
+	"github.com/BaldiSlayer/t-bmstu/services/auth/internal/domain"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 

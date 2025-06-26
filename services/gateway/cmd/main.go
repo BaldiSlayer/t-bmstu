@@ -22,8 +22,7 @@ func main() {
 	jwtSecret := []byte(jwtSecretString)
 
 	routes := []proxy.Route{
-		{Prefix: "/submission/", Target: "http://localhost:8081"},
-		{Prefix: "/auth/", Target: "http://localhost:8082"},
+		{Prefix: "/auth/", Target: "http://auth:8081"},
 	}
 
 	router := proxy.NewProxyRouter(routes, logger)
