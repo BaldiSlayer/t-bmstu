@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/BaldiSlayer/t-bmstu/services/auth-microservice/internal/domain"
+	"github.com/BaldiSlayer/t-bmstu/services/auth/internal/domain"
 )
 
 type TokenManager interface {

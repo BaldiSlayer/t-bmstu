@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/BaldiSlayer/t-bmstu/services/auth-microservice/internal/app"
+	"github.com/BaldiSlayer/t-bmstu/services/auth/internal/app"
 	"go.uber.org/zap"
 )
 

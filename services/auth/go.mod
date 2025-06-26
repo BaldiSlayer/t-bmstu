@@ -1,4 +1,4 @@
-module github.com/BaldiSlayer/t-bmstu/services/auth-microservice
+module github.com/BaldiSlayer/t-bmstu/services/auth
 
 go 1.24.3
 
