@@ -1,4 +1,4 @@
-package app
+package usecase
 
 import (
 	"context"
@@ -12,22 +12,22 @@ type TokenManager interface {
 	Generate(username, role string) (string, error)
 }
 
-type AuthUseCase struct {
+type Auth struct {
 	userRepo     domain.UserRepository
 	tokenManager TokenManager
 }
 
-func NewAuthUseCase(userRepo domain.UserRepository, tokenManager TokenManager) *AuthUseCase {
-	return &AuthUseCase{
+func NewAuth(userRepo domain.UserRepository, tokenManager TokenManager) *Auth {
+	return &Auth{
 		userRepo:     userRepo,
 		tokenManager: tokenManager,
 	}
 }
 
-func (a *AuthUseCase) Login(ctx context.Context, username, password string) (string, error) {
+func (a *Auth) Login(ctx context.Context, username, password string) (string, error) {
 	user, err := a.userRepo.FindByUsername(ctx, username)
 	if err != nil {
-		return "", errors.New("user not found")
+		return "", fmt.Errorf("failed to retrieve user: %w", err)
 	}
 
 	if user.Password != password {
@@ -37,7 +37,7 @@ func (a *AuthUseCase) Login(ctx context.Context, username, password string) (str
 	return a.tokenManager.Generate(user.Username, user.Role)
 }
 
-func (a *AuthUseCase) Register(ctx context.Context, username, password, role string) error {
+func (a *Auth) Register(ctx context.Context, username, password, role string) error {
 	existing, err := a.userRepo.FindByUsername(ctx, username)
 	if err != nil {
 		return fmt.Errorf("failed to find user by username: %w", err)

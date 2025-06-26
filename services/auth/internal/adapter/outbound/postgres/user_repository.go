@@ -22,7 +22,7 @@ func (ur *UserRepository) FindByUsername(ctx context.Context, username string) (
 
 	err := ur.db.QueryRow(
 		ctx,
-		`SELECT WHERE username = $1`, username,
+		`SELECT FROM users WHERE username = $1`, username,
 	).Scan(&u.Username, &u.Password, &u.Role)
 
 	return &u, err

@@ -13,7 +13,7 @@ services:
   auth:
     build: ./services/auth
     ports:
-      - "8082:8082"
+      - "8081:8081"
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
