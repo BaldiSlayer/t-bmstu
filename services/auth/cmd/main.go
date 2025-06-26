@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/BaldiSlayer/t-bmstu/services/auth/internal/adapter/outbound/postgres"
-	"github.com/BaldiSlayer/t-bmstu/services/auth/internal/app"
+	"github.com/BaldiSlayer/t-bmstu/services/auth/internal/usecase"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
@@ -62,7 +62,7 @@ func main() {
 	userRepo := postgres.New(pool)
 
 	tokenManager := NewJWTSigner([]byte(jwtSecretString))
-	useCase := app.NewAuthUseCase(userRepo, tokenManager)
+	useCase := usecase.NewAuth(userRepo, tokenManager)
 
 	handler := adapter_http.NewAuthHandler(useCase, logger)
 

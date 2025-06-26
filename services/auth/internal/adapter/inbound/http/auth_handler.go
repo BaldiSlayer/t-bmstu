@@ -4,16 +4,16 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/BaldiSlayer/t-bmstu/services/auth/internal/app"
+	"github.com/BaldiSlayer/t-bmstu/services/auth/internal/usecase"
 	"go.uber.org/zap"
 )
 
 type AuthHandler struct {
-	useCase *app.AuthUseCase
+	useCase *usecase.Auth
 	logger  *zap.Logger
 }
 
-func NewAuthHandler(uc *app.AuthUseCase, logger *zap.Logger) *AuthHandler {
+func NewAuthHandler(uc *usecase.Auth, logger *zap.Logger) *AuthHandler {
 	return &AuthHandler{
 		useCase: uc,
 		logger:  logger,
