@@ -24,6 +24,19 @@ services:
     depends_on:
       - postgres
 
+  task:
+    build: ./services/task
+    ports:
+      - "8082:8082"
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=task_user
+      - POSTGRES_PASSWORD=task_pass
+      - POSTGRES_DB=task_db
+    depends_on:
+      - postgres
+
   postgres:
     image: postgres:15
     ports:

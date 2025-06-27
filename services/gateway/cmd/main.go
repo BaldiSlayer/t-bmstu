@@ -23,6 +23,7 @@ func main() {
 
 	routes := []proxy.Route{
 		{Prefix: "/auth/", Target: "http://auth:8081"},
+		{Prefix: "/tasks", Target: "http://task:8082"},
 	}
 
 	router := proxy.NewProxyRouter(routes, logger)

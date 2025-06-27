@@ -19,6 +19,7 @@ var publicRoutes = []string{
 	"/auth/login",
 	"/auth/register",
 	"/healthz",
+	"/tasks",
 }
 
 type Claims struct {
