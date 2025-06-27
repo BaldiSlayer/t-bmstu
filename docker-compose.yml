@@ -1,6 +1,21 @@
 version: '3.9'
 
 services:
+  ui:
+    build: 
+      context: ./ui
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8080
+    depends_on:
+      - gateway
+    volumes:
+      - ./ui:/app
+      - /app/node_modules
+    command: yarn dev --host 0.0.0.0
+
   gateway:
     build: ./services/gateway
     ports:
