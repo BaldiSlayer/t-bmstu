@@ -35,7 +35,7 @@ func (t *TaskHandler) ListTasks(w http.ResponseWriter, r *http.Request) {
 		offset = 0
 	}
 
-	tasks, err := t.uc.ListTasksPaginated(limit, offset)
+	tasks, err := t.uc.ListTasksPaginated(r.Context(), limit, offset)
 	if err != nil {
 		t.logger.Error("failed to list tasks", zap.Error(err))
 		http.Error(w, "failed to fetch tasks", http.StatusInternalServerError)
@@ -55,7 +55,7 @@ func (t *TaskHandler) GetTaskByID(w http.ResponseWriter, r *http.Request) {
 		id = 0
 	}
 
-	task, err := t.uc.GetTask(id)
+	task, err := t.uc.GetTask(r.Context(), id)
 	if err != nil {
 		t.logger.Warn("task not found", zap.Int("id", id), zap.Error(err))
 		http.Error(w, "task not found", http.StatusNotFound)
